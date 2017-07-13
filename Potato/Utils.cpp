@@ -1,6 +1,6 @@
 #include "Utils.h"
 
-#include <cstdio> //getchar
+#include <cstdio>
 
 void LogError(const std::string& error_log)
 {

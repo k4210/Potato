@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <set>
 
 /*
 Keywords:
@@ -50,6 +51,9 @@ enum class Token
 	Const,
 	Virtual, 
 	Operator,
+	Void,
+	True,
+	False,
 
 	// Parantesis, brackets, etc
 	OpenScope, // {
@@ -61,6 +65,11 @@ enum class Token
 	OpenTypeSpecifier, // [
 	CloseTypeSpecifier, // ]
 	EndOfCommand, // ;
+	Dot, // .
+	QuestionMark, // ?
+	Colon, // :
+
+	//The following tokens require a str value
 
 	//literals
 	IntValue,
@@ -103,9 +112,8 @@ private:
 	std::map<std::string, Token> alpha_token_map_;
 	std::map<std::string, Token> single_nonalpha_token_map_;
 
-	std::vector<int> one_sign_operators;
-	std::vector<std::string> two_signs_operators;
-	//std::vector<std::string> three_signs_operators;
+	std::set<int> one_sign_operators;
+	std::set<std::string> two_signs_operators;
 
 public:
 	const TokenData& GetCurrentToken() const
@@ -114,6 +122,6 @@ public:
 	}
 
 	void ReadNextToken();
-
+	void RegisterOperatorString(const char* str);
 	Lexer();
 };
