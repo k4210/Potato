@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PotatoCommon.h"
+#include "potato_common.h"
 #include <string>
 #include <memory>
 #include <vector>
@@ -19,7 +19,7 @@ public:
 		: val(in_val)
 	{}
 
-	llvm::Value* codegen() override;
+	llvm::Value* codegen() override { return nullptr; }
 };
 
 class LiteralIntegerAST : public ExprAST
@@ -31,7 +31,7 @@ public:
 		: val(in_val)
 	{}
 
-	llvm::Value* codegen() override;
+	llvm::Value* codegen() override { return nullptr; }
 };
 
 class LiteralStringAST : public ExprAST
@@ -43,20 +43,20 @@ public:
 		: val(in_val)
 	{}
 
-	llvm::Value* codegen() override;
+	llvm::Value* codegen() override { return nullptr; }
 };
 
-class LocalVariableAST : public ExprAST
+class LocalVariableDeclarationAST : public ExprAST
 {
-	std::string name;
-	//Type
+	VariableData variable;
+
 public:
-	LocalVariableAST(const std::string &in_name)
-		: name(in_name)
+	LocalVariableDeclarationAST(VariableData in_variable)
+		: variable(in_variable) //move?
 	{}
 
 	llvm::Value *codegen() override { return nullptr; }
-	const std::string& GetName() const { return name; }
+	const VariableData& GetName() const { return variable; }
 };
 
 class TerminalExprAST : public ExprAST 

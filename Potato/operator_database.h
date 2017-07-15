@@ -1,8 +1,7 @@
 #pragma once
 
 #include <map>
-#include "Lexer.h"
-#include "PotatoCommon.h"
+#include "potato_common.h"
 
 struct OperatorId
 {

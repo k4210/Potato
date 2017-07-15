@@ -1,4 +1,4 @@
-#include "OperatorDatabase.h"
+#include "operator_database.h"
 #include <memory>
 
 OperatorId::OperatorId(const char* in_name)

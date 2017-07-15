@@ -1,5 +1,5 @@
-#include "Lexer.h"
-#include "Utils.h"
+#include "lexer.h"
+#include "utils.h"
 
 #include <cstdio> //getchar
 #include <ctype.h> //isalpha, isspace
@@ -32,18 +32,18 @@ Lexer::Lexer()
 	alpha_token_map_.emplace("true", Token::True);
 	alpha_token_map_.emplace("false", Token::False);
 
-	single_nonalpha_token_map_.emplace("{", Token::OpenScope);
-	single_nonalpha_token_map_.emplace("}", Token::CloseScope);
-	single_nonalpha_token_map_.emplace("(", Token::OpenArgumentsList);
-	single_nonalpha_token_map_.emplace(")", Token::CloseArgumentsList);
-	single_nonalpha_token_map_.emplace(",", Token::Separator);
-	single_nonalpha_token_map_.emplace("^", Token::ReferenceSign);
-	single_nonalpha_token_map_.emplace("[", Token::OpenTypeSpecifier);
-	single_nonalpha_token_map_.emplace("]", Token::CloseTypeSpecifier);
-	single_nonalpha_token_map_.emplace(";", Token::EndOfCommand);
-	single_nonalpha_token_map_.emplace(".", Token::Dot);
-	single_nonalpha_token_map_.emplace("?", Token::QuestionMark);
-	single_nonalpha_token_map_.emplace(":", Token::Colon);
+	single_nonalpha_token_map_.emplace('{', Token::OpenScope);
+	single_nonalpha_token_map_.emplace('}', Token::CloseScope);
+	single_nonalpha_token_map_.emplace('(', Token::OpenArgumentsList);
+	single_nonalpha_token_map_.emplace(')', Token::CloseArgumentsList);
+	single_nonalpha_token_map_.emplace(',', Token::Separator);
+	single_nonalpha_token_map_.emplace('^', Token::ReferenceSign);
+	single_nonalpha_token_map_.emplace('[', Token::OpenTypeSpecifier);
+	single_nonalpha_token_map_.emplace(']', Token::CloseTypeSpecifier);
+	single_nonalpha_token_map_.emplace(';', Token::EndOfCommand);
+	single_nonalpha_token_map_.emplace('.', Token::Dot);
+	single_nonalpha_token_map_.emplace('?', Token::QuestionMark);
+	single_nonalpha_token_map_.emplace(':', Token::Colon);
 }
 
 void Lexer::RegisterOperatorString(const char* str)
@@ -178,17 +178,6 @@ void Lexer::ReadNextToken()
 	{
 		auto read_nonalphanum_stuff = [&]() -> TokenData
 		{
-			{
-				const std::string idententifier = StringFromSingleSign(last_read_char_);
-				auto found = single_nonalpha_token_map_.find(idententifier);
-				if (found != single_nonalpha_token_map_.end())
-				{
-					const Token found_token = found->second;
-					last_read_char_ = getchar();
-					return TokenData(found_token);
-				}
-			}
-
 			std::string two_signs = StringFromSingleSign(last_read_char_);
 			last_read_char_ = getchar();
 			AppendSingleChar(two_signs, last_read_char_);
@@ -198,6 +187,20 @@ void Lexer::ReadNextToken()
 			{
 				last_read_char_ = getchar();
 				return TokenData(Token::OperatorExpr, two_signs);
+			}
+
+			if (two_signs == "::")
+			{
+				last_read_char_ = getchar();
+				return TokenData(Token::DoubleColon);
+			}
+
+			auto found_single_nonalpha_token = single_nonalpha_token_map_.find(two_signs[0]);
+			if (found_single_nonalpha_token != single_nonalpha_token_map_.end())
+			{
+				//next char was already read;
+				const Token found_token = found_single_nonalpha_token->second;
+				return TokenData(found_token);
 			}
 
 			const bool single_sign_op_found = one_sign_operators.find(two_signs[0]) != one_sign_operators.end();

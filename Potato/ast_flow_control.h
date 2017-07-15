@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AST_Expression.h"
+#include "ast_expression.h"
 
 class ControlFlowAST : public NodeAST
 {
@@ -8,8 +8,12 @@ class ControlFlowAST : public NodeAST
 
 class CodeScopeAST : public ControlFlowAST
 {
-	// variables
-	// control flow
+	std::vector<std::unique_ptr<NodeAST>> code;
+
+	CodeScopeAST(std::vector<std::unique_ptr<NodeAST>> in_code)
+		: code(std::move(in_code))
+	{}
+
 	llvm::Value *codegen() override { return nullptr; }
 };
 
@@ -61,31 +65,3 @@ class ReturnAST : public ControlFlowAST
 	{}
 	llvm::Value *codegen() override { return nullptr; }
 };
-
-class HighLevelAST
-{
-public:
-	virtual ~HighLevelAST() = default;
-	virtual llvm::Value *codegen() = 0;
-};
- 
-class ClassAST : public HighLevelAST
-{
-	llvm::Value *codegen() override { return nullptr; }
-};
-
-class FunctionDeclarationAST : public HighLevelAST
-{
-	llvm::Value *codegen() override { return nullptr; }
-};
-
-class FunctionImplementationAST : public HighLevelAST
-{
-	llvm::Value *codegen() override { return nullptr; }
-};
-//class declaration
-//Function declaration
-//structure declaration
-// member field declaration
-
-//function definition

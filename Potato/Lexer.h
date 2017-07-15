@@ -66,7 +66,8 @@ enum class Token
 	CloseTypeSpecifier, // ]
 	EndOfCommand, // ;
 	Dot, // .
-	QuestionMark, // ?
+	QuestionMark, // ? 
+	DoubleColon, // ::
 	Colon, // :
 
 	//The following tokens require a str value
@@ -110,7 +111,7 @@ private:
 
 	//maps of context-free tokens
 	std::map<std::string, Token> alpha_token_map_;
-	std::map<std::string, Token> single_nonalpha_token_map_;
+	std::map<int, Token> single_nonalpha_token_map_;
 
 	std::set<int> one_sign_operators;
 	std::set<std::string> two_signs_operators;

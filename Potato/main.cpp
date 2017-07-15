@@ -1,7 +1,7 @@
-#include "Lexer.h"
-#include "OperatorDatabase.h"
-#include "AST_Expression.h"
-#include "AST_ControlFlow.h"
+#include "lexer.h"
+#include "operator_database.h"
+#include "ast_expression.h"
+#include "ast_flow_control.h"
 
 void main()
 {

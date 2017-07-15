@@ -13,38 +13,44 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Parser">
+      <UniqueIdentifier>{8ca32a55-574b-4a1d-8be3-b3b05f411379}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lexer.cpp">
+    <ClCompile Include="utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.cpp">
+    <ClCompile Include="operator_database.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OperatorDatabase.cpp">
+    <ClCompile Include="lexer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Lexer.h">
+    <ClInclude Include="ast_structure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="ast_flow_control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OperatorDatabase.h">
+    <ClInclude Include="lexer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PotatoCommon.h">
+    <ClInclude Include="operator_database.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AST_Expression.h">
+    <ClInclude Include="potato_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AST_ControlFlow.h">
+    <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ast_expression.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

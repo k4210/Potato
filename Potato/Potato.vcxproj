@@ -133,18 +133,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="OperatorDatabase.cpp" />
-    <ClCompile Include="Lexer.cpp" />
-    <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="operator_database.cpp" />
+    <ClCompile Include="lexer.cpp" />
+    <ClCompile Include="utils.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AST_Expression.h" />
-    <ClInclude Include="AST_ControlFlow.h" />
-    <ClInclude Include="OperatorDatabase.h" />
-    <ClInclude Include="Lexer.h" />
-    <ClInclude Include="PotatoCommon.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="ast_expression.h" />
+    <ClInclude Include="ast_flow_control.h" />
+    <ClInclude Include="ast_structure.h" />
+    <ClInclude Include="operator_database.h" />
+    <ClInclude Include="lexer.h" />
+    <ClInclude Include="potato_common.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
