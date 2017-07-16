@@ -77,7 +77,7 @@ class UnaryOpAST : public ExprAST
 {
 	EUnaryOperator opcode;
 	std::unique_ptr<ExprAST> terminal;
-	//Type for cast
+	TypeData type_for_cast;
 
 public:
 	UnaryOpAST(EUnaryOperator in_opcode, std::unique_ptr<ExprAST> in_terminal)
@@ -99,7 +99,7 @@ public:
 		, lhs(std::move(in_lhs))
 		, rhs(std::move(in_rhs)) {}
 
-	llvm::Value *codegen() override;
+	llvm::Value *codegen() override { return nullptr; }
 };
 
 class CallExprAST : public ExprAST 

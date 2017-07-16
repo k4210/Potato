@@ -54,21 +54,27 @@ enum class Token
 	Void,
 	True,
 	False,
+	Static,
+	Module,
+	Import,
 
 	// Parantesis, brackets, etc
-	OpenScope, // {
-	CloseScope, // }
-	OpenArgumentsList, // (
-	CloseArgumentsList, // )
-	Separator, // ,
+	OpenCurlyBracket, // {
+	CloseCurlyBracket, // }
+	OpenRoundBracket, // (
+	CloseRoundBracket, // )
+	Coma, // ,
 	ReferenceSign, // ^
-	OpenTypeSpecifier, // [
-	CloseTypeSpecifier, // ]
-	EndOfCommand, // ;
+	OperSquareBracket, // [
+	CloseSquareBracket, // ]
+	Semicolon, // ;
 	Dot, // .
 	QuestionMark, // ? 
-	DoubleColon, // ::
 	Colon, // :
+
+	DoubleColon, // ::
+	Arrow, //->
+	DoubleDot, // ..
 
 	//The following tokens require a str value
 
@@ -112,9 +118,10 @@ private:
 	//maps of context-free tokens
 	std::map<std::string, Token> alpha_token_map_;
 	std::map<int, Token> single_nonalpha_token_map_;
+	std::map<std::string, Token> two_signs_nonalpha_token_map_;
 
-	std::set<int> one_sign_operators;
-	std::set<std::string> two_signs_operators;
+	std::set<int> one_sign_operators_;
+	std::set<std::string> two_signs_operators_;
 
 public:
 	const TokenData& GetCurrentToken() const

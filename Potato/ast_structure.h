@@ -7,7 +7,6 @@ class HighLevelAST
 {
 public:
 	virtual ~HighLevelAST() = default;
-	virtual llvm::Value *codegen() = 0;
 };
 
 class FunctionDeclarationAST : public HighLevelAST
@@ -17,20 +16,6 @@ class FunctionDeclarationAST : public HighLevelAST
 	std::vector<VariableData> parameters;
 
 	std::unique_ptr<CodeScopeAST> optional_body;
-
-	llvm::Value *codegen() override { return nullptr; }
-};
-
-class ClassAST : public HighLevelAST
-{
-	AccessSpecifier acces_specifier;
-	std::string name;
-	std::string base_class;
-	std::vector<std::string> implemented_interfaces;
-	std::vector<VariableData> member_fields;
-	std::vector<std::unique_ptr<FunctionDeclarationAST>> functions;
-
-	llvm::Value *codegen() override { return nullptr; }
 };
 
 class StructureAST : public HighLevelAST
@@ -39,7 +24,33 @@ class StructureAST : public HighLevelAST
 	std::string name;
 	std::string base_class;
 	std::vector<VariableData> member_fields;
-
-	llvm::Value *codegen() override { return nullptr; }
 };
+
+class ClassAST : public StructureAST
+{
+	std::vector<std::string> implemented_interfaces;
+	std::vector<std::unique_ptr<FunctionDeclarationAST>> functions;
+};
+
+class ModuleAST : public HighLevelAST
+{
+public:
+	std::string name;
+
+	ModuleAST(const std::string& in_name)
+		: name(in_name)
+	{}
+};
+
+class ImportAST : public HighLevelAST
+{
+public:
+	std::string name;
+
+	ImportAST(const std::string& in_name)
+		: name(in_name)
+	{}
+};
+
+
 

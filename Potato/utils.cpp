@@ -2,7 +2,7 @@
 
 #include <cstdio>
 
-void LogError(const std::string& error_log)
+void LogError(const char* str_1, const char* str_2)
 {
-	fprintf_s(stderr, "Error: %s\n", error_log.c_str());
+	fprintf_s(stderr, "Error: %s %s\n", str_1, str_2);
 }

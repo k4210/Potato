@@ -2,4 +2,4 @@
 
 #include <string>
 
-void LogError(const std::string& error_log);
+void LogError(const char* str_1, const char* str_2 = nullptr);

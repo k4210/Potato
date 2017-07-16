@@ -31,16 +31,23 @@ Lexer::Lexer()
 	alpha_token_map_.emplace("void", Token::Void);
 	alpha_token_map_.emplace("true", Token::True);
 	alpha_token_map_.emplace("false", Token::False);
+	alpha_token_map_.emplace("static", Token::Static);
+	alpha_token_map_.emplace("module", Token::Module);
+	alpha_token_map_.emplace("import", Token::Import);
 
-	single_nonalpha_token_map_.emplace('{', Token::OpenScope);
-	single_nonalpha_token_map_.emplace('}', Token::CloseScope);
-	single_nonalpha_token_map_.emplace('(', Token::OpenArgumentsList);
-	single_nonalpha_token_map_.emplace(')', Token::CloseArgumentsList);
-	single_nonalpha_token_map_.emplace(',', Token::Separator);
+	two_signs_nonalpha_token_map_.emplace("..", Token::DoubleDot);
+	two_signs_nonalpha_token_map_.emplace("->", Token::Arrow);
+	two_signs_nonalpha_token_map_.emplace("::", Token::DoubleColon);
+
+	single_nonalpha_token_map_.emplace('{', Token::OpenCurlyBracket);
+	single_nonalpha_token_map_.emplace('}', Token::CloseCurlyBracket);
+	single_nonalpha_token_map_.emplace('(', Token::OpenRoundBracket);
+	single_nonalpha_token_map_.emplace(')', Token::CloseRoundBracket);
+	single_nonalpha_token_map_.emplace(',', Token::Coma);
 	single_nonalpha_token_map_.emplace('^', Token::ReferenceSign);
-	single_nonalpha_token_map_.emplace('[', Token::OpenTypeSpecifier);
-	single_nonalpha_token_map_.emplace(']', Token::CloseTypeSpecifier);
-	single_nonalpha_token_map_.emplace(';', Token::EndOfCommand);
+	single_nonalpha_token_map_.emplace('[', Token::OperSquareBracket);
+	single_nonalpha_token_map_.emplace(']', Token::CloseSquareBracket);
+	single_nonalpha_token_map_.emplace(';', Token::Semicolon);
 	single_nonalpha_token_map_.emplace('.', Token::Dot);
 	single_nonalpha_token_map_.emplace('?', Token::QuestionMark);
 	single_nonalpha_token_map_.emplace(':', Token::Colon);
@@ -51,17 +58,15 @@ void Lexer::RegisterOperatorString(const char* str)
 	const size_t str_size = strlen(str);
 	if (1 == str_size)
 	{
-		one_sign_operators.emplace(*str);
+		one_sign_operators_.emplace(*str);
 	}
 	else if (2 == str_size)
 	{
-		two_signs_operators.emplace(str);
+		two_signs_operators_.emplace(str);
 	}
 	else
 	{
-		std::string error_msg("Lexer::RegisterOperatorString wrong size of: ");
-		error_msg += str;
-		LogError(error_msg);
+		LogError("Lexer::RegisterOperatorString wrong size of: ", str);
 	}
 }
 namespace 
@@ -143,9 +148,7 @@ void Lexer::ReadNextToken()
 			} while (isdigit(last_read_char_) || last_read_char_ == kDot);
 			if (dot_number > 1)
 			{
-				std::string error_msg = "Lexer error - too many dots in number: ";
-				error_msg += number_string;
-				LogError(error_msg);
+				LogError("Lexer error - too many dots in number: ", number_string.c_str());
 				return TokenData(Token::Error, number_string);
 			}
 			const Token token = (0 == dot_number) ? Token::IntValue : Token::FloatValue;
@@ -182,36 +185,34 @@ void Lexer::ReadNextToken()
 			last_read_char_ = getchar();
 			AppendSingleChar(two_signs, last_read_char_);
 
-			const bool two_sign_op_found = two_signs_operators.find(two_signs) != two_signs_operators.end();
+			auto two_sign_token_found = two_signs_nonalpha_token_map_.find(two_signs);
+			if (two_sign_token_found != two_signs_nonalpha_token_map_.end())
+			{
+				last_read_char_ = getchar();
+				return TokenData(two_sign_token_found->second);
+			}
+
+			const bool two_sign_op_found = two_signs_operators_.find(two_signs) != two_signs_operators_.end();
 			if (two_sign_op_found)
 			{
 				last_read_char_ = getchar();
 				return TokenData(Token::OperatorExpr, two_signs);
 			}
 
-			if (two_signs == "::")
-			{
-				last_read_char_ = getchar();
-				return TokenData(Token::DoubleColon);
-			}
-
 			auto found_single_nonalpha_token = single_nonalpha_token_map_.find(two_signs[0]);
 			if (found_single_nonalpha_token != single_nonalpha_token_map_.end())
 			{
 				//next char was already read;
-				const Token found_token = found_single_nonalpha_token->second;
-				return TokenData(found_token);
+				return TokenData(found_single_nonalpha_token->second);
 			}
 
-			const bool single_sign_op_found = one_sign_operators.find(two_signs[0]) != one_sign_operators.end();
+			const bool single_sign_op_found = one_sign_operators_.find(two_signs[0]) != one_sign_operators_.end();
 			if (single_sign_op_found)
 			{
 				//next char was already read;
 				return TokenData(Token::OperatorExpr, StringFromSingleSign(two_signs[0]));
 			}
-			std::string error_msg = "Lexer error - unknown operator: ";
-			error_msg += two_signs;
-			LogError(error_msg);
+			LogError("Lexer error - unknown operator: ", two_signs.c_str());
 			return TokenData(Token::Error, two_signs);
 		};
 		current_token_ = read_nonalphanum_stuff();
