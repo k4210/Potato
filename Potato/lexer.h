@@ -57,6 +57,7 @@ enum class Token
 	Static,
 	Module,
 	Import,
+	Enum,
 
 	// Parantesis, brackets, etc
 	OpenCurlyBracket, // {

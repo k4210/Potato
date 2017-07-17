@@ -20,7 +20,8 @@ class FunctionDeclarationAST : public HighLevelAST
 
 class StructureAST : public HighLevelAST
 {
-	AccessSpecifier acces_specifier;
+public:
+	//Todo: add info - expose to other modules?
 	std::string name;
 	std::string base_class;
 	std::vector<VariableData> member_fields;

@@ -34,6 +34,7 @@ Lexer::Lexer()
 	alpha_token_map_.emplace("static", Token::Static);
 	alpha_token_map_.emplace("module", Token::Module);
 	alpha_token_map_.emplace("import", Token::Import);
+	alpha_token_map_.emplace("enum", Token::Enum);
 
 	two_signs_nonalpha_token_map_.emplace("..", Token::DoubleDot);
 	two_signs_nonalpha_token_map_.emplace("->", Token::Arrow);
