@@ -53,22 +53,30 @@ enum class AccessSpecifier
 	Public,
 };
 
-enum class MutableSpecifier
+enum class MutableSpecifier : unsigned int
 {
 	None		= 0,
 	Mutable		= 1 << 0,
 	MutableRef	= 1 << 1,
 };
 
+enum class EType
+{
+	Value,
+	Reference,
+	Void
+};
+
 struct TypeData
 {
 	std::string name;
-	unsigned int mutable_specifiers;
+	unsigned int mutable_specifiers = 0;
+	EType type = EType::Value;
 };
 
 struct VariableData
 {
 	TypeData type_data;
 	std::string name;
-	AccessSpecifier access_specifier;
+	AccessSpecifier access_specifier = AccessSpecifier::Default;
 };

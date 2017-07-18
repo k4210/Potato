@@ -92,7 +92,6 @@ enum class Token
 
 class Lexer
 {
-public:
 	struct TokenData
 	{
 		Token token;
@@ -112,7 +111,6 @@ public:
 		{}
 	};
 
-private:
 	TokenData current_token_;
 	int last_read_char_;
 
@@ -124,13 +122,17 @@ private:
 	std::set<int> one_sign_operators_;
 	std::set<std::string> two_signs_operators_;
 
-public:
-	const TokenData& GetCurrentToken() const
-	{
-		return current_token_;
-	}
-
 	void ReadNextToken();
+public:
+
+	void Start() 
+	{ 
+		ReadNextToken(); 
+	}
+	void End() {}
+	// if given token is equal current one, then next token is read, and true is return
+	bool Consume(Token token);
+	bool Consume(Token token, std::string& out_str);
 	void RegisterOperatorString(const char* str);
 	Lexer();
 };

@@ -85,8 +85,37 @@ namespace
 	}
 }
 
+bool Consume(Token token);
+bool Consume(Token token, std::string& out_str);
+
+bool Lexer::Consume(Token token)
+{
+	if (current_token_.token == token)
+	{
+		ReadNextToken();
+		return true;
+	}
+	return false;
+}
+
+bool Lexer::Consume(Token token, std::string& out_str)
+{
+	if (current_token_.token == token)
+	{
+		out_str = std::move(current_token_.string_value);
+		ReadNextToken();
+		return true;
+	}
+	return false;
+}
+
 void Lexer::ReadNextToken()
 {
+	if (Token::EndOfFile == current_token_.token || Token::Error == current_token_.token)
+	{
+		return;
+	}
+
 	auto remove_whitepaces_and_comments = [&]()
 	{
 		bool ready_for_meaningful_token = false;

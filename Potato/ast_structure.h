@@ -11,9 +11,12 @@ public:
 
 class FunctionDeclarationAST : public HighLevelAST
 {
+public:
+	std::string name;
 	AccessSpecifier acces_specifier;
 	TypeData return_type;
 	std::vector<VariableData> parameters;
+	bool is_mutable = false;
 
 	std::unique_ptr<CodeScopeAST> optional_body;
 };
