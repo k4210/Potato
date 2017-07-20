@@ -1,6 +1,7 @@
 #include "operator_database.h"
 #include "utils.h"
 #include <memory>
+#include <algorithm>
 
 OperatorId::OperatorId(const char* in_name)
 {
@@ -29,7 +30,8 @@ UnaryOperatorDatabase::UnaryOperatorDatabase()
 	auto add = [&](const char* in_name, EUnaryOperator in_op)
 	{
 		const OperatorId id(in_name);
-		operators.emplace(id, OperatorData(id, in_op));
+		operators_map.emplace(in_op, OperatorData(id, in_op));
+		id_to_op.emplace(id, in_op);
 	};
 
 	add("-", EUnaryOperator::Minus);
@@ -42,11 +44,12 @@ BinaryOperatorDatabase::BinaryOperatorDatabase()
 	auto add = [&](const char* in_name, int in_precedence, EBinaryOperator in_op)
 	{
 		const OperatorId id(in_name);
-		operators.emplace(id, OperatorData(id, in_precedence, in_op));
+		operators_map.emplace(in_op, OperatorData(id, in_precedence, in_op));
+		id_to_op.emplace(id, in_op);
+		op_sorted_by_precedence_descending.push_back(in_op);
 	};
 	add("=", 5, EBinaryOperator::Assign);
 	add("=?", 5, EBinaryOperator::AssignIfValidChain);
-	// ternary
 	add("+=", 5, EBinaryOperator::AddAssign);
 	add("-=", 5, EBinaryOperator::SubAssign);
 	add("*=", 5, EBinaryOperator::MultiplyAssign);
@@ -67,5 +70,25 @@ BinaryOperatorDatabase::BinaryOperatorDatabase()
 	add("*", 35, EBinaryOperator::Multiply);
 	add("/", 35, EBinaryOperator::Divide);
 	add("%", 35, EBinaryOperator::Modulo);
-	//unary
+
+	std::reverse(op_sorted_by_precedence_descending.begin(), op_sorted_by_precedence_descending.end());
+}
+
+BinaryOperatorDatabase::OperatorData BinaryOperatorDatabase::GetNextOpWithLowerPrecedence(EBinaryOperator op) const
+{
+	auto found_iter = std::find(op_sorted_by_precedence_descending.begin(),op_sorted_by_precedence_descending.end(),op);
+	if (found_iter != op_sorted_by_precedence_descending.end())
+	{
+		const int current_precedence = GetOperatorData(op).precedence;
+		for (++found_iter; found_iter != op_sorted_by_precedence_descending.end(); ++found_iter)
+		{
+			const OperatorData data = GetOperatorData(*found_iter);
+			if (current_precedence > data.precedence)
+			{
+				return data;
+			}
+		}
+	}
+	return OperatorData(nullptr, 0, EBinaryOperator::_Error);
+
 }

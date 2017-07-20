@@ -8,13 +8,13 @@ void main()
 	const BinaryOperatorDatabase& binary_operators = BinaryOperatorDatabase::Get();
 	for (const auto iter : binary_operators.GetOperators())
 	{
-		lexer.RegisterOperatorString(iter.first);
+		lexer.RegisterOperatorString(iter.second.name);
 	}
 
 	const UnaryOperatorDatabase& unary_operators = UnaryOperatorDatabase::Get();
 	for (const auto iter : unary_operators.GetOperators())
 	{
-		lexer.RegisterOperatorString(iter.first);
+		lexer.RegisterOperatorString(iter.second.name);
 	}
 
 	lexer.Start();

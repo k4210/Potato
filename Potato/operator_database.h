@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include "potato_common.h"
 
 struct OperatorId
@@ -9,6 +10,10 @@ struct OperatorId
 private:
 	char name[kNameMaxSize];
 public:
+	const char* c_str() const
+	{
+		return name;
+	}
 	operator const char*() const 
 	{ 
 		return name; 
@@ -33,18 +38,25 @@ public:
 	};
 
 private:
-	std::map<OperatorId, OperatorData> operators;
-
+	std::map<EUnaryOperator, OperatorData> operators_map;
+	std::map<OperatorId, EUnaryOperator> id_to_op;
 public:
-	const std::map<OperatorId, OperatorData>& GetOperators() const
+	const std::map<EUnaryOperator, OperatorData>& GetOperators() const
 	{
-		return operators;
+		return operators_map;
+	}
+
+	OperatorData GetOperatorData(EUnaryOperator op) const
+	{
+		const auto found_data = operators_map.find(op);
+		return (found_data != operators_map.end()) ? found_data->second : OperatorData(nullptr, EUnaryOperator::_Error);
 	}
 
 	OperatorData FindOperator(OperatorId key) const
 	{
-		auto found_iter = operators.find(key);
-		return (found_iter != operators.end()) ? found_iter->second : OperatorData(nullptr, EUnaryOperator::_Error);
+		const auto found_op = id_to_op.find(key);
+		const EUnaryOperator op = (found_op != id_to_op.end()) ? found_op->second : EUnaryOperator::_Error;
+		return GetOperatorData(op);
 	}
 
 private:
@@ -72,19 +84,34 @@ public:
 	};
 
 private:
-	std::map<OperatorId, OperatorData> operators;
-
+	std::map<EBinaryOperator, OperatorData> operators_map;
+	std::map<OperatorId, EBinaryOperator> id_to_op;
+	std::vector<EBinaryOperator> op_sorted_by_precedence_descending;
 public:
-	const std::map<OperatorId, OperatorData>& GetOperators() const
+	const std::map<EBinaryOperator, OperatorData>& GetOperators() const
 	{
-		return operators;
+		return operators_map;
+	}
+
+	OperatorData GetOperatorData(EBinaryOperator op) const
+	{
+		const auto found_data = operators_map.find(op);
+		return (found_data != operators_map.end()) ? found_data->second : OperatorData(nullptr, 0, EBinaryOperator::_Error);
 	}
 
 	OperatorData FindOperator(OperatorId key) const
 	{
-		auto found_iter = operators.find(key);
-		return (found_iter != operators.end()) ? found_iter->second : OperatorData(nullptr, 0, EBinaryOperator::_Error);
+		const auto found_op = id_to_op.find(key);
+		const EBinaryOperator op = (found_op != id_to_op.end()) ? found_op->second : EBinaryOperator::_Error;
+		return GetOperatorData(op);
 	}
+
+	OperatorData GetHighestPrecedenceOp() const
+	{
+		return GetOperatorData(op_sorted_by_precedence_descending[0]);
+	}
+	
+	OperatorData GetNextOpWithLowerPrecedence(EBinaryOperator op) const;
 
 private:
 	BinaryOperatorDatabase();

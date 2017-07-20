@@ -436,12 +436,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		}
 		return variable_ast;
 	};
-	if (already_read_id)
-	{
-		HandleIdentifier(*already_read_id, false);
-	}
-
-	while (ContinueExpression())
+	auto AddExpressionToList = [&]()
 	{
 		std::string str;
 		if (Optional(Token::OpenRoundBracket))
@@ -455,7 +450,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 			{
 				prev_call_ast->args.emplace_back(std::move(local_ast));
 			}
-			else if(local_ast)
+			else if (local_ast)
 			{
 				list.emplace_back(std::move(local_ast));
 			}
@@ -464,7 +459,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		{
 			std::unique_ptr<ExprAST> local_ast = ParseExpression();
 			CallExprAST* prev_call_ast = list.empty() ? nullptr : dynamic_cast<CallExprAST*>(list.back().get());
-			if(ErrorIfFalse(local_ast && prev_call_ast, "Unexpexted ','"))
+			if (ErrorIfFalse(local_ast && prev_call_ast, "Unexpexted ','"))
 			{
 				prev_call_ast->args.emplace_back(std::move(local_ast));
 			}
@@ -513,32 +508,74 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		}
 		else if (Optional(Token::OperatorExpr, str))
 		{
-			const bool prefer_unary_op = list.empty() || dynamic_cast<BinaryOpAST*>(list.back().get());
-			
-			auto found_unary_operator = UnaryOperatorDatabase::Get().FindOperator(str.c_str());
-			if (prefer_unary_op && found_unary_operator.op != EUnaryOperator::_Error)
+			const bool do_unary_op = list.empty() || dynamic_cast<BinaryOpAST*>(list.back().get());
+			if (do_unary_op)
 			{
+				auto found_unary_operator = UnaryOperatorDatabase::Get().FindOperator(str.c_str());
+				ErrorIfFalse(found_unary_operator.op != EUnaryOperator::_Error, str.c_str());
 				list.emplace_back(std::make_unique<UnaryOpAST>(found_unary_operator.op));
 			}
 			else
 			{
 				auto found_binary_operator = BinaryOperatorDatabase::Get().FindOperator(str.c_str());
-				if (found_binary_operator.op != EBinaryOperator::_Error)
-				{
-					list.emplace_back(std::make_unique<BinaryOpAST>(found_binary_operator.op));
-				}
+				ErrorIfFalse(found_binary_operator.op != EBinaryOperator::_Error, str.c_str());
+				list.emplace_back(std::make_unique<BinaryOpAST>(found_binary_operator.op));
 			}
 		}
 		else
 		{
 			LogError("Parser::ParseExpression unexpected token");
 		}
-	}
+	};
 
-	if (list.empty())
+	if (already_read_id)
+	{
+		HandleIdentifier(*already_read_id, false);
+	}
+	while (ContinueExpression())
+	{
+		AddExpressionToList();
+	}
+	if (list.empty() || !ShouldContinue())
 	{
 		return nullptr;
 	}
+	//Apply unary operators - do it in reverse order: op closer to terminal goes first
+	{
+		auto ast_iter = list.rbegin();
+		for (++ast_iter; ast_iter != list.rend(); ++ast_iter)
+		{
+			UnaryOpAST* const unary_ast = dynamic_cast<UnaryOpAST*>(ast_iter->get());
+			if (unary_ast)
+			{
+				auto prev_elem = ast_iter; prev_elem--;
+				unary_ast->terminal = std::move(*prev_elem);
+				list.erase(prev_elem.base());
+			}
+		}
+	}
 
+	//Apply binary operator
+	const BinaryOperatorDatabase& database = BinaryOperatorDatabase::Get();
+	for (BinaryOperatorDatabase::OperatorData op_data = database.GetHighestPrecedenceOp()
+		; op_data.precedence > 0
+		; op_data = database.GetNextOpWithLowerPrecedence(op_data.op))
+	{
+		auto ast_iter = list.begin();
+		for (++ast_iter; ast_iter != list.end(); ++ast_iter)
+		{
+			BinaryOpAST* const binary_ast = dynamic_cast<BinaryOpAST*>(ast_iter->get());
+			const bool match_precedence = binary_ast && (database.GetOperatorData(binary_ast->opcode).precedence == op_data.precedence);
+			if (match_precedence)
+			{
+				auto prev_iter = ast_iter; --prev_iter;
+				auto next_ptr = ast_iter;  ++next_ptr;
+				binary_ast->lhs = std::move(*prev_iter);
+				binary_ast->rhs = std::move(*next_ptr);
+				list.erase(prev_iter);
+				list.erase(next_ptr);
+			}
+		}
+	}
 	return nullptr;
 }
