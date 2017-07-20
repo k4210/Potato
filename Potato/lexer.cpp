@@ -35,6 +35,7 @@ Lexer::Lexer()
 	alpha_token_map_.emplace("module", Token::Module);
 	alpha_token_map_.emplace("import", Token::Import);
 	alpha_token_map_.emplace("enum", Token::Enum);
+	alpha_token_map_.emplace("new", Token::New);
 
 	two_signs_nonalpha_token_map_.emplace("..", Token::DoubleDot);
 	two_signs_nonalpha_token_map_.emplace("->", Token::Arrow);
@@ -46,7 +47,7 @@ Lexer::Lexer()
 	single_nonalpha_token_map_.emplace(')', Token::CloseRoundBracket);
 	single_nonalpha_token_map_.emplace(',', Token::Coma);
 	single_nonalpha_token_map_.emplace('^', Token::ReferenceSign);
-	single_nonalpha_token_map_.emplace('[', Token::OperSquareBracket);
+	single_nonalpha_token_map_.emplace('[', Token::OpenSquareBracket);
 	single_nonalpha_token_map_.emplace(']', Token::CloseSquareBracket);
 	single_nonalpha_token_map_.emplace(';', Token::Semicolon);
 	single_nonalpha_token_map_.emplace('.', Token::Dot);
@@ -67,7 +68,7 @@ void Lexer::RegisterOperatorString(const char* str)
 	}
 	else
 	{
-		LogError("Lexer::RegisterOperatorString wrong size of: ", str);
+		Utils::LogError("Lexer::RegisterOperatorString wrong size of: ", str);
 	}
 }
 namespace 
@@ -178,7 +179,7 @@ void Lexer::ReadNextToken()
 			} while (isdigit(last_read_char_) || last_read_char_ == kDot);
 			if (dot_number > 1)
 			{
-				LogError("Lexer error - too many dots in number: ", number_string.c_str());
+				Utils::LogError("Lexer error - too many dots in number: ", number_string.c_str());
 				return TokenData(Token::Error, number_string);
 			}
 			const Token token = (0 == dot_number) ? Token::IntValue : Token::FloatValue;
@@ -202,7 +203,7 @@ void Lexer::ReadNextToken()
 				last_read_char_ = getchar();
 				return TokenData(Token::StringValue, str_value);
 			}
-			LogError("Lexer error - never ending string");
+			Utils::LogError("Lexer error - never ending string");
 			return TokenData(Token::Error, str_value);
 		};
 		current_token_ = read_string_token();
@@ -242,7 +243,7 @@ void Lexer::ReadNextToken()
 				//next char was already read;
 				return TokenData(Token::OperatorExpr, StringFromSingleSign(two_signs[0]));
 			}
-			LogError("Lexer error - unknown operator: ", two_signs.c_str());
+			Utils::LogError("Lexer error - unknown operator: ", two_signs.c_str());
 			return TokenData(Token::Error, two_signs);
 		};
 		current_token_ = read_nonalphanum_stuff();

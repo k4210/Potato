@@ -5,27 +5,6 @@
 #include <vector>
 #include <set>
 
-/*
-Keywords:
-- class, interface, struct, function
-- this, null
-- for, continue, break
-- if, else
-- return
-- mutable, mutable_ref
-- private, public
-- const
-- virtual
-- operator
-
-Built-in types:
-- int32, float32, uint32
-- string, vector<>
-- object-strong-ref, object-weak-ref
-
-
-*/
-
 enum class Token
 {
 	EndOfFile,
@@ -58,6 +37,7 @@ enum class Token
 	Module,
 	Import,
 	Enum,
+	New,
 
 	// Parantesis, brackets, etc
 	OpenCurlyBracket, // {
@@ -66,7 +46,7 @@ enum class Token
 	CloseRoundBracket, // )
 	Coma, // ,
 	ReferenceSign, // ^
-	OperSquareBracket, // [
+	OpenSquareBracket, // [
 	CloseSquareBracket, // ]
 	Semicolon, // ;
 	Dot, // .
@@ -130,9 +110,13 @@ public:
 		ReadNextToken(); 
 	}
 	void End() {}
-	// if given token is equal current one, then next token is read, and true is return
+
 	bool Consume(Token token);
 	bool Consume(Token token, std::string& out_str);
+	bool CheckTokenDontProceed(Token token) const
+	{
+		return (current_token_.token == token);
+	}
 	void RegisterOperatorString(const char* str);
 	Lexer();
 };

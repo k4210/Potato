@@ -2,13 +2,16 @@
 
 enum class EUnaryOperator
 {
+	_Error,
 	Minus,
+	Negation, //!
+	ByteNegation, //~
 	Cast,
-	Unknown
 };
 
 enum class EBinaryOperator
 {
+	_Error,
 	Assign,
 	AssignIfValidChain,
 	AddAssign,

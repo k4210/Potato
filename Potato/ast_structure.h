@@ -32,6 +32,7 @@ public:
 
 class ClassAST : public StructureAST
 {
+public:
 	std::vector<std::string> implemented_interfaces;
 	std::vector<std::unique_ptr<FunctionDeclarationAST>> functions;
 };
@@ -40,10 +41,7 @@ class ModuleAST : public HighLevelAST
 {
 public:
 	std::string name;
-
-	ModuleAST(const std::string& in_name)
-		: name(in_name)
-	{}
+	std::vector<std::unique_ptr<HighLevelAST>> items;
 };
 
 class ImportAST : public HighLevelAST

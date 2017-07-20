@@ -5,40 +5,49 @@
 #include "lexer.h"
 #include "potato_common.h"
 
-class HighLevelAST;
-class CodeScopeAST;
+#include "ast_expression.h"
+#include "ast_flow_control.h"
+#include "ast_structure.h"
+
 
 class Parser
 {
 protected:
 	bool error_ = false;
 	bool eof_ = false;
+	Lexer& lexer_;
 
-	bool Expected(Lexer& lexer, Token expected_token, const char* error_msg);
-	bool Expected(Lexer& lexer, Token expected_token, std::string& out_str, const char* error_msg);
-
-	bool ShouldContinue(Lexer& lexer);
-
-	VariableData ParseMemberField(Lexer& lexer);
-	TypeData ParseType(Lexer& lexer, bool allow_void = false);
-	AccessSpecifier ParseOptionalAccessSpecifier(Lexer& lexer);
-
-	std::unique_ptr<HighLevelAST> ParseStruct(Lexer& lexer);
-	std::unique_ptr<HighLevelAST> ParseFunction(Lexer& lexer);
-	std::unique_ptr<HighLevelAST> ParseClass(Lexer& lexer);
-
-	std::unique_ptr<CodeScopeAST> ParseScope(Lexer& lexer);
 public:
-	void Reset()
+	bool Expected(Token expected_token, const char* error_msg = nullptr);
+	bool Expected(Token expected_token, std::string& out_str, const char* error_msg = nullptr);
+	bool Optional(Token token)
 	{
-		error_ = false;
-		eof_ = false;
+		return lexer_.Consume(token);
 	}
-
-	Parser()
+	bool Optional(Token token, std::string& out_str)
 	{
-		Reset();
+		return lexer_.Consume(token, out_str);
 	}
+	bool ShouldContinue();
 
-	std::vector<std::unique_ptr<HighLevelAST>> ParseModule(Lexer& lexer);
+	VariableData ParseMemberField();
+	TypeData ParseType(bool allow_void = false);
+	AccessSpecifier ParseOptionalAccessSpecifier();
+	void LogError(const char* msg1, const char* msg2 = nullptr);
+
+	std::unique_ptr<StructureAST> ParseStruct();
+	std::unique_ptr<FunctionDeclarationAST> ParseFunction();
+	std::unique_ptr<ClassAST> ParseClass();
+
+	std::unique_ptr<CodeScopeAST> ParseScope();
+	std::unique_ptr<NodeAST> ParseFlowControl();
+	std::unique_ptr<ExprAST> ParseExpression(const std::string* already_read_id = nullptr);
+	std::unique_ptr<ExprAST> ParseWholeExpressionLine();
+
+public:
+	Parser(Lexer& lexer) 
+		: lexer_(lexer)
+	{}
+
+	std::unique_ptr<ModuleAST> ParseModule();
 };

@@ -1,8 +1,14 @@
 #include "operator_database.h"
+#include "utils.h"
 #include <memory>
 
 OperatorId::OperatorId(const char* in_name)
 {
+	if (strlen(in_name) >= kNameMaxSize)
+	{
+		Utils::LogError("Too long operator ID:", in_name);
+		in_name = "err";
+	}
 	strcpy_s<kNameMaxSize>(name, in_name);
 }
 
@@ -10,6 +16,25 @@ const BinaryOperatorDatabase& BinaryOperatorDatabase::Get()
 {
 	static BinaryOperatorDatabase instance;
 	return instance;
+}
+
+const UnaryOperatorDatabase& UnaryOperatorDatabase::Get()
+{
+	static UnaryOperatorDatabase instance;
+	return instance;
+}
+
+UnaryOperatorDatabase::UnaryOperatorDatabase()
+{
+	auto add = [&](const char* in_name, EUnaryOperator in_op)
+	{
+		const OperatorId id(in_name);
+		operators.emplace(id, OperatorData(id, in_op));
+	};
+
+	add("-", EUnaryOperator::Minus);
+	add("!", EUnaryOperator::Negation);
+	add("`", EUnaryOperator::ByteNegation);
 }
 
 BinaryOperatorDatabase::BinaryOperatorDatabase()

@@ -16,6 +16,43 @@ public:
 	OperatorId(const char* in_name);
 };
 
+class UnaryOperatorDatabase
+{
+public:
+	static const UnaryOperatorDatabase& Get();
+
+	struct OperatorData
+	{
+		OperatorId name;
+		EUnaryOperator op;
+
+		OperatorData(OperatorId in_name, EUnaryOperator in_op)
+			: name(in_name)
+			, op(in_op)
+		{}
+	};
+
+private:
+	std::map<OperatorId, OperatorData> operators;
+
+public:
+	const std::map<OperatorId, OperatorData>& GetOperators() const
+	{
+		return operators;
+	}
+
+	OperatorData FindOperator(OperatorId key) const
+	{
+		auto found_iter = operators.find(key);
+		return (found_iter != operators.end()) ? found_iter->second : OperatorData(nullptr, EUnaryOperator::_Error);
+	}
+
+private:
+	UnaryOperatorDatabase();
+	UnaryOperatorDatabase(UnaryOperatorDatabase const&) = delete;
+	UnaryOperatorDatabase& operator=(UnaryOperatorDatabase const&) = delete;
+};
+
 class BinaryOperatorDatabase
 {
 public:
@@ -43,8 +80,16 @@ public:
 		return operators;
 	}
 
+	OperatorData FindOperator(OperatorId key) const
+	{
+		auto found_iter = operators.find(key);
+		return (found_iter != operators.end()) ? found_iter->second : OperatorData(nullptr, 0, EBinaryOperator::_Error);
+	}
+
 private:
 	BinaryOperatorDatabase();
 	BinaryOperatorDatabase(BinaryOperatorDatabase const&) = delete;
 	BinaryOperatorDatabase& operator=(BinaryOperatorDatabase const&) = delete;
 };
+
+
