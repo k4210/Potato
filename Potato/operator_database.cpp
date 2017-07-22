@@ -1,16 +1,21 @@
+#include "stdafx.h"
 #include "operator_database.h"
 #include "utils.h"
-#include <memory>
-#include <algorithm>
 
 OperatorId::OperatorId(const char* in_name)
 {
-	if (strlen(in_name) >= kNameMaxSize)
+	if (nullptr == in_name)
 	{
-		Utils::LogError("Too long operator ID:", in_name);
+		in_name = "";
+	}
+	else if (strlen(in_name) >= kNameMaxSize)
+	{
+		Utils::LogError("Wrong operator ID:", in_name);
 		in_name = "err";
 	}
-	strcpy_s<kNameMaxSize>(name, in_name);
+	const auto sizeof_str = strlen(in_name);
+	strcpy_s(name(), kNameMaxSize, in_name);
+	memset(name() + sizeof_str, 0, (kNameMaxSize - sizeof_str) * sizeof(char));
 }
 
 const BinaryOperatorDatabase& BinaryOperatorDatabase::Get()

@@ -1,13 +1,12 @@
 #pragma once
 
+#include "potato_common.h"
 #include "ast_expression.h"
 #include "ast_flow_control.h"
+#include "utils.h"
 
-class HighLevelAST
+class HighLevelAST : public NodeAST
 {
-public:
-	virtual ~HighLevelAST() = default;
-	virtual void log(Logger& logger, const char* contect_str) const = 0;
 };
 
 class FunctionDeclarationAST : public HighLevelAST
@@ -27,12 +26,18 @@ public:
 		result += name;
 		logger.PrintLine(contect_str, result.c_str());
 		logger.IncreaseIndent();
+		logger.PrintLine("return", return_type.ToString().c_str());
+		for (auto& param : parameters)
+		{
+			logger.PrintLine("parameter", param.ToString().c_str());
+		}
 		if (optional_body)
 		{
 			optional_body->log(logger, "body");
 		}
 		logger.DecreaseIndent();
 	}
+	void codegen(Context& context) const override;
 };
 
 class StructureAST : public HighLevelAST
@@ -48,7 +53,15 @@ public:
 		std::string result = "StructureAST ";
 		result += name;
 		logger.PrintLine(contect_str, result.c_str());
+
+		logger.IncreaseIndent();
+		for (auto& var : member_fields)
+		{
+			logger.PrintLine("member_field", var.ToString().c_str());
+		}
+		logger.DecreaseIndent();
 	}
+	void codegen(Context& context) const override;
 };
 
 class ClassAST : public StructureAST
@@ -62,12 +75,19 @@ public:
 		std::string result = "ClassAST ";
 		result += name;
 		logger.PrintLine(contect_str, result.c_str());
+		logger.IncreaseIndent();
+		for (auto& var : member_fields)
+		{
+			logger.PrintLine("member_field", var.ToString().c_str());
+		}
 
 		for (auto& func : functions)
 		{
 			func->log(logger, "func");
 		}
+		logger.DecreaseIndent();
 	}
+	void codegen(Context& context) const override;
 };
 
 class ModuleAST : public HighLevelAST
@@ -87,6 +107,7 @@ public:
 			item->log(logger, "global");
 		}
 	}
+	void codegen(Context& context) const override;
 };
 
 class ImportAST : public HighLevelAST
@@ -103,6 +124,7 @@ public:
 		result += name;
 		logger.PrintLine(contect_str, result.c_str());
 	}
+	void codegen(Context& context) const override;
 };
 
 

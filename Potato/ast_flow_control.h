@@ -1,6 +1,8 @@
 #pragma once
 
+#include "potato_common.h"
 #include "ast_expression.h"
+#include "utils.h"
 
 class ControlFlowAST : public NodeAST
 {
@@ -20,7 +22,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class IfAST : public ControlFlowAST
@@ -47,7 +49,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class ForExprAST : public ControlFlowAST 
@@ -77,12 +79,13 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class BreakAST : public ControlFlowAST
 {
-	llvm::Value *codegen() override { return nullptr; }
+public:
+	void codegen(Context& context) const override;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "BreakAST");
@@ -91,7 +94,8 @@ class BreakAST : public ControlFlowAST
 
 class ContinueAST : public ControlFlowAST
 {
-	llvm::Value *codegen() override { return nullptr; }
+public:
+	void codegen(Context& context) const override;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "ContinueAST");
@@ -112,5 +116,5 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };

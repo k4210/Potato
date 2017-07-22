@@ -1,10 +1,8 @@
 #pragma once
 
 #include "potato_common.h"
-#include <string>
-#include <memory>
-#include <vector>
 #include "operator_database.h"
+#include "utils.h"
 
 class ExprAST : public NodeAST
 {
@@ -25,7 +23,7 @@ public:
 		sprintf_s(buff, "LiteralFloatAST %f", val);
 		logger.PrintLine(contect_str, buff);
 	}
-	llvm::Value* codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class LiteralIntegerAST : public ExprAST
@@ -42,7 +40,7 @@ public:
 		sprintf_s(buff, "LiteralIntegerAST %i", val);
 		logger.PrintLine(contect_str, buff);
 	}
-	llvm::Value* codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class LiteralStringAST : public ExprAST
@@ -59,7 +57,7 @@ public:
 		sprintf_s(buff, "LiteralStringAST \"%s\"", val.c_str());
 		logger.PrintLine(contect_str, buff);
 	}
-	llvm::Value* codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class LocalVariableDeclarationAST : public ExprAST
@@ -76,7 +74,7 @@ public:
 		sprintf_s(buff, "LocalVariableDeclarationAST %s", variable.ToString().c_str());
 		logger.PrintLine(contect_str, buff);
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class VariableExprAST : public ExprAST 
@@ -96,7 +94,7 @@ public:
 			logger.DecreaseIndent();
 		}
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class UnaryOpAST : public ExprAST 
@@ -132,7 +130,7 @@ public:
 			logger.DecreaseIndent();
 		}
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class BinaryOpAST : public ExprAST 
@@ -167,7 +165,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class CallExprAST : public ExprAST 
@@ -192,7 +190,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 
 class TernaryOpAst : public ExprAST
@@ -209,6 +207,6 @@ public:
 	{
 		logger.PrintLine(contect_str, "TernaryOpAst");
 	}
-	llvm::Value *codegen() override { return nullptr; }
+	void codegen(Context& context) const override;
 };
 

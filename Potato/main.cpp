@@ -1,26 +1,49 @@
+#include "stdafx.h"
 #include "lexer.h"
 #include "parser.h"
 #include "operator_database.h"
+#include "utils.h"
 
-void main()
+int main(int argc, char *argv[])
 {
+	auto WaitForUserToExit = []()
+	{
+		printf("Press return to exit..");
+		getchar();
+	};
+
+	if (argc < 2)
+	{
+		fprintf(stderr, "No file specified!\n");
+		WaitForUserToExit();
+		return EXIT_FAILURE;
+	}
+
 	Lexer lexer;
-	const BinaryOperatorDatabase& binary_operators = BinaryOperatorDatabase::Get();
-	for (const auto iter : binary_operators.GetOperators())
+	for (const auto iter : BinaryOperatorDatabase::Get().GetOperators())
+	{
+		lexer.RegisterOperatorString(iter.second.name);
+	}
+	for (const auto iter : UnaryOperatorDatabase::Get().GetOperators())
 	{
 		lexer.RegisterOperatorString(iter.second.name);
 	}
 
-	const UnaryOperatorDatabase& unary_operators = UnaryOperatorDatabase::Get();
-	for (const auto iter : unary_operators.GetOperators())
+	std::unique_ptr<NodeAST> module_ast;
 	{
-		lexer.RegisterOperatorString(iter.second.name);
-	}
-
-	lexer.Start();
-	{
+		fprintf(stderr, "Potato is ready! File: %s\n", argv[1]);
+		lexer.Start(argv[1]);
 		Parser parser(lexer);
-		auto module_stuff = parser.ParseModule();
+		module_ast = parser.ParseModule();
+		lexer.End();
 	}
-	lexer.End();
+
+	if (module_ast)
+	{
+		printf("\n");
+		Logger logger;
+		module_ast->log(logger, "root");
+		printf("\n");
+	}
+	WaitForUserToExit();
 }

@@ -1,60 +1,64 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Common">
+      <UniqueIdentifier>{de3afd8c-3f03-49af-9b24-d6c6c67c4fab}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    <Filter Include="Parser">
+      <UniqueIdentifier>{e3db6558-7d48-453e-b1e6-c4cad6208d94}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Codegen">
+      <UniqueIdentifier>{906c7645-8c88-470c-a8b1-3a8643329ebd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="operator_database.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="lexer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Parser</Filter>
     </ClCompile>
     <ClCompile Include="parser.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Parser</Filter>
     </ClCompile>
+    <ClCompile Include="code_gen.cpp">
+      <Filter>Codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="operator_database.cpp">
+      <Filter>Codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ast_structure.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ast_expression.h">
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="ast_flow_control.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="lexer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="operator_database.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ast_structure.h">
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="potato_common.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="ast_expression.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="stdafx.h">
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="parser.h">
-      <Filter>Header Files</Filter>
+      <Filter>Parser</Filter>
     </ClInclude>
+    <ClInclude Include="lexer.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="operator_database.h">
+      <Filter>Codegen</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="TestCode.txt" />
   </ItemGroup>
 </Project>

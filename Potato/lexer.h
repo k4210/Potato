@@ -1,74 +1,6 @@
 #pragma once
 
-#include <string>
-#include <map>
-#include <vector>
-#include <set>
-
-enum class Token
-{
-	EndOfFile,
-
-	//keywords
-	Class, 
-	Interface, 
-	Struct, 
-	Function,
-	This, 
-	Object,
-	Null,
-	For,
-	Continue,
-	Break,
-	If,
-	Else,
-	Return,
-	Mutable, 
-	Mutable_ref,
-	Private,
-	Public,
-	Const,
-	Virtual, 
-	Operator,
-	Void,
-	True,
-	False,
-	Static,
-	Module,
-	Import,
-	Enum,
-	New,
-
-	// Parantesis, brackets, etc
-	OpenCurlyBracket, // {
-	CloseCurlyBracket, // }
-	OpenRoundBracket, // (
-	CloseRoundBracket, // )
-	Coma, // ,
-	ReferenceSign, // ^
-	OpenSquareBracket, // [
-	CloseSquareBracket, // ]
-	Semicolon, // ;
-	Dot, // .
-	QuestionMark, // ? 
-	Colon, // :
-
-	DoubleColon, // ::
-	Arrow, //->
-	DoubleDot, // ..
-
-	//The following tokens require a str value
-
-	//literals
-	IntValue,
-	FloatValue,
-	StringValue,
-
-	//other
-	OperatorExpr,
-	Identifier,
-	Error,
-};
+#include "potato_common.h"
 
 class Lexer
 {
@@ -102,14 +34,18 @@ class Lexer
 	std::set<int> one_sign_operators_;
 	std::set<std::string> two_signs_operators_;
 
+	std::ifstream input_stream_;
+	int current_line_ = 0;
+	int sign_in_line_ = 0;
+	std::string filename_;
+
 	void ReadNextToken();
 public:
 
-	void Start() 
-	{ 
-		ReadNextToken(); 
-	}
-	void End() {}
+	void Start(const char* filename);
+	void End();
+
+	std::string GetCodeLocation() const;
 
 	bool Consume(Token token);
 	bool Consume(Token token, std::string& out_str);
@@ -119,4 +55,8 @@ public:
 	}
 	void RegisterOperatorString(const char* str);
 	Lexer();
+	~Lexer()
+	{
+		End();
+	}
 };

@@ -1,24 +1,36 @@
 #pragma once
 
-#include <map>
-#include <vector>
 #include "potato_common.h"
 
 struct OperatorId
 {
 	static const int kNameMaxSize = 4;
+	unsigned int data;
+	static_assert(sizeof(unsigned int) == kNameMaxSize * sizeof(char), "wrong size of OperatorId");
 private:
-	char name[kNameMaxSize];
+	char* name()
+	{
+		return reinterpret_cast<char*>(&data);
+	}
+	const char* name() const
+	{
+		return reinterpret_cast<const char*>(&data);
+	}
 public:
 	const char* c_str() const
 	{
-		return name;
+		return name();
 	}
 	operator const char*() const 
 	{ 
-		return name; 
+		return name();
 	}
 	OperatorId(const char* in_name);
+
+	bool operator<(const OperatorId& other) const
+	{
+		return data < other.data;
+	}
 };
 
 class UnaryOperatorDatabase

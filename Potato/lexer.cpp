@@ -1,10 +1,6 @@
+#include "stdafx.h"
 #include "lexer.h"
 #include "utils.h"
-
-#include <cstdio> //getchar
-#include <ctype.h> //isalpha, isspace
-
-#include <algorithm>
 
 Lexer::Lexer()
 	: last_read_char_(' ')
@@ -17,6 +13,7 @@ Lexer::Lexer()
 	alpha_token_map_.emplace("object", Token::Object);
 	alpha_token_map_.emplace("null", Token::Null);
 	alpha_token_map_.emplace("for", Token::For);
+	alpha_token_map_.emplace("break", Token::Break);
 	alpha_token_map_.emplace("continue", Token::Continue);
 	alpha_token_map_.emplace("if", Token::If);
 	alpha_token_map_.emplace("else", Token::Else);
@@ -68,7 +65,7 @@ void Lexer::RegisterOperatorString(const char* str)
 	}
 	else
 	{
-		Utils::LogError("Lexer::RegisterOperatorString wrong size of: ", str);
+		Utils::LogError(GetCodeLocation(), "Lexer::RegisterOperatorString wrong size of: ", str);
 	}
 }
 namespace 
@@ -85,9 +82,6 @@ namespace
 		return str;
 	}
 }
-
-bool Consume(Token token);
-bool Consume(Token token, std::string& out_str);
 
 bool Lexer::Consume(Token token)
 {
@@ -116,6 +110,21 @@ void Lexer::ReadNextToken()
 	{
 		return;
 	}
+
+	auto getchar = [&]() -> int
+	{
+		const int read_char = input_stream_.get();
+		if (read_char == '\n')
+		{
+			current_line_++;
+			sign_in_line_ = 0;
+		}
+		else
+		{
+			sign_in_line_++;
+		}
+		return read_char;
+	};
 
 	auto remove_whitepaces_and_comments = [&]()
 	{
@@ -148,7 +157,7 @@ void Lexer::ReadNextToken()
 	{
 		auto read_alphanum_token = [&]() -> TokenData
 		{
-			std::string idententifier = StringFromSingleSign(last_read_char_);
+			std::string idententifier;
 			do
 			{
 				AppendSingleChar(idententifier, last_read_char_);
@@ -179,7 +188,7 @@ void Lexer::ReadNextToken()
 			} while (isdigit(last_read_char_) || last_read_char_ == kDot);
 			if (dot_number > 1)
 			{
-				Utils::LogError("Lexer error - too many dots in number: ", number_string.c_str());
+				Utils::LogError(GetCodeLocation(),"Lexer error - too many dots in number: ", number_string.c_str());
 				return TokenData(Token::Error, number_string);
 			}
 			const Token token = (0 == dot_number) ? Token::IntValue : Token::FloatValue;
@@ -243,9 +252,39 @@ void Lexer::ReadNextToken()
 				//next char was already read;
 				return TokenData(Token::OperatorExpr, StringFromSingleSign(two_signs[0]));
 			}
-			Utils::LogError("Lexer error - unknown operator: ", two_signs.c_str());
+			Utils::LogError(GetCodeLocation(), "Lexer error - unknown operator: ", two_signs.c_str());
 			return TokenData(Token::Error, two_signs);
 		};
 		current_token_ = read_nonalphanum_stuff();
 	}
+}
+
+std::string Lexer::GetCodeLocation() const
+{
+	std::string result = filename_ + " ";
+	result += std::to_string(current_line_) + " ";
+	result += std::to_string(sign_in_line_);
+	return result;
+}
+
+void Lexer::Start(const char* filename)
+{
+	input_stream_.open(filename);
+	current_line_ = 1;
+	sign_in_line_ = 0;
+	filename_ = std::string(filename);
+
+	if (!input_stream_.is_open())
+	{
+		current_token_.token = Token::Error;
+		Utils::LogError("Lexer::Start failed to open file", filename);
+		return;
+	}
+	current_token_.token = Token::Void;
+	last_read_char_ = ' ';
+	ReadNextToken();
+}
+void Lexer::End()
+{
+	input_stream_.close();
 }

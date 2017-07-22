@@ -1,14 +1,14 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-#include "lexer.h"
 #include "potato_common.h"
 
-#include "ast_expression.h"
-#include "ast_flow_control.h"
-#include "ast_structure.h"
-
+class Lexer;
+class StructureAST;
+class FunctionDeclarationAST;
+class ClassAST;
+class CodeScopeAST;
+class ExprAST;
+class ModuleAST;
 
 class Parser
 {
@@ -20,14 +20,8 @@ protected:
 public:
 	bool Expected(Token expected_token, const char* error_msg = nullptr);
 	bool Expected(Token expected_token, std::string& out_str, const char* error_msg = nullptr);
-	bool Optional(Token token)
-	{
-		return lexer_.Consume(token);
-	}
-	bool Optional(Token token, std::string& out_str)
-	{
-		return lexer_.Consume(token, out_str);
-	}
+	bool Optional(Token token);
+	bool Optional(Token token, std::string& out_str);
 	bool ShouldContinue();
 
 	VariableData ParseMemberField();
@@ -49,5 +43,5 @@ public:
 		: lexer_(lexer)
 	{}
 
-	std::unique_ptr<ModuleAST> ParseModule();
+	std::unique_ptr<NodeAST> ParseModule();
 };

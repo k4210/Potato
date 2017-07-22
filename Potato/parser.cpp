@@ -1,12 +1,25 @@
+#include "stdafx.h"
 #include "parser.h"
 #include "operator_database.h"
+#include "lexer.h"
+#include "ast_expression.h"
+#include "ast_flow_control.h"
+#include "ast_structure.h"
 #include "utils.h"
-#include <list>
 
 void Parser::LogError(const char* msg1, const char* msg2)
 {
 	error_ = true;
-	Utils::LogError(msg1, msg2);
+	Utils::LogError(lexer_.GetCodeLocation(), msg1, msg2);
+}
+
+bool Parser::Optional(Token token)
+{
+	return lexer_.Consume(token);
+}
+bool Parser::Optional(Token token, std::string& out_str)
+{
+	return lexer_.Consume(token, out_str);
 }
 
 bool Parser::Expected(Token expected_token, const char* error_msg)
@@ -228,7 +241,7 @@ std::unique_ptr<ClassAST> Parser::ParseClass()
 	return class_ast;
 }
 
-std::unique_ptr<ModuleAST> Parser::ParseModule()
+std::unique_ptr<NodeAST> Parser::ParseModule()
 {
 	std::unique_ptr<ModuleAST> module = std::make_unique<ModuleAST>();
 	if (Optional(Token::Module))
@@ -262,7 +275,9 @@ std::unique_ptr<ModuleAST> Parser::ParseModule()
 			LogError("Parser::ParseModule", "Unexpected token");
 		}
 	}
-	return module;
+
+	if(!error_ ) return module;
+	return nullptr;
 }
 
 std::unique_ptr<NodeAST> Parser::ParseFlowControl()
@@ -288,8 +303,8 @@ std::unique_ptr<NodeAST> Parser::ParseFlowControl()
 	{
 		auto for_ast = std::make_unique<ForExprAST>();
 		Expected(Token::OpenRoundBracket);
-		for_ast->start = Optional(Token::Semicolon) ? nullptr : ParseExpression();
-		Expected(Token::Semicolon);
+		for_ast->start = Optional(Token::Semicolon) ? nullptr : ParseWholeExpressionLine();
+		//Expected(Token::Semicolon);
 		for_ast->condition = ParseExpression();
 		Expected(Token::Semicolon);
 		if (!Optional(Token::CloseRoundBracket))
@@ -395,7 +410,8 @@ std::unique_ptr<ExprAST> Parser::ParseWholeExpressionLine()
 
 std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read_id)
 {
-	std::list<std::unique_ptr<ExprAST>> list;
+	//std::list<std::unique_ptr<ExprAST>> list;
+	std::vector<std::unique_ptr<ExprAST>> list;
 	bool consume_commas = false;
 	int opened_round_brackets = 0;
 
@@ -417,7 +433,6 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 	auto HandleIdentifier = [&](std::string id, bool reuse_context) -> std::unique_ptr<ExprAST>
 	{
 		const bool is_function = lexer_.CheckTokenDontProceed(Token::OpenRoundBracket);
-		std::unique_ptr<ExprAST> new_ast;
 		if (is_function)
 		{
 			auto call_ast = std::make_unique<CallExprAST>();
@@ -430,7 +445,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		}
 		auto variable_ast = std::make_unique<VariableExprAST>();
 		variable_ast->name = id;
-		if (reuse_context)
+		if (reuse_context && ErrorIfFalse(!list.empty(), "Expected context"))
 		{
 			variable_ast->context = std::move(list.back());
 		}
@@ -443,16 +458,19 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		{
 			consume_commas = true;
 			opened_round_brackets++;
-			std::unique_ptr<ExprAST> local_ast = ParseExpression();
-			ErrorIfFalse(local_ast || lexer_.CheckTokenDontProceed(Token::CloseRoundBracket), "Expected ')'");
-			CallExprAST* const prev_call_ast = list.empty() ? nullptr : dynamic_cast<CallExprAST*>(list.back().get());
-			if (local_ast && prev_call_ast)
+			if (!lexer_.CheckTokenDontProceed(Token::CloseRoundBracket))
 			{
-				prev_call_ast->args.emplace_back(std::move(local_ast));
-			}
-			else if (local_ast)
-			{
-				list.emplace_back(std::move(local_ast));
+				std::unique_ptr<ExprAST> local_ast = ParseExpression();
+				ErrorIfFalse(nullptr != local_ast, "Expected ')'");
+				CallExprAST* const prev_call_ast = list.empty() ? nullptr : dynamic_cast<CallExprAST*>(list.back().get());
+				if (local_ast && prev_call_ast)
+				{
+					prev_call_ast->args.emplace_back(std::move(local_ast));
+				}
+				else if (local_ast)
+				{
+					list.emplace_back(std::move(local_ast));
+				}
 			}
 		}
 		else if (Optional(Token::Coma))
@@ -466,7 +484,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		}
 		else if (Optional(Token::CloseRoundBracket))
 		{
-			ErrorIfFalse(0 == opened_round_brackets, "Unexpexted ')'");
+			ErrorIfFalse(0 != opened_round_brackets, "Unexpexted ')'");
 			consume_commas = false;
 			opened_round_brackets--;
 		}
@@ -479,7 +497,10 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 			std::string id;
 			Expected(Token::Identifier, id);
 			auto new_ast = HandleIdentifier(id, true);
-			list.pop_back();
+			if (ErrorIfFalse(!list.empty(), "Expected context"))
+			{
+				list.pop_back();
+			}
 			list.emplace_back(std::move(new_ast));
 		}
 		else if (Optional(Token::Identifier, str))
@@ -495,7 +516,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 			const int int_val = atoi(str.c_str());
 			list.emplace_back(std::make_unique<LiteralIntegerAST>(int_val));
 		}
-		else if (Optional(Token::IntValue, str))
+		else if (Optional(Token::FloatValue, str))
 		{
 			const double double_val = atof(str.c_str());
 			list.emplace_back(std::make_unique<LiteralFloatAST>(double_val));
@@ -508,7 +529,8 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		}
 		else if (Optional(Token::OperatorExpr, str))
 		{
-			const bool do_unary_op = list.empty() || dynamic_cast<BinaryOpAST*>(list.back().get());
+			const BinaryOpAST* const bin_op_ast = list.empty() ? nullptr : dynamic_cast<BinaryOpAST*>(list.back().get());
+			const bool do_unary_op = list.empty() || (bin_op_ast && (nullptr == bin_op_ast->rhs));
 			if (do_unary_op)
 			{
 				auto found_unary_operator = UnaryOperatorDatabase::Get().FindOperator(str.c_str());
@@ -530,28 +552,24 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 
 	if (already_read_id)
 	{
-		HandleIdentifier(*already_read_id, false);
+		list.emplace_back(HandleIdentifier(*already_read_id, false));
 	}
 	while (ContinueExpression())
 	{
 		AddExpressionToList();
 	}
-	if (list.empty() || !ShouldContinue())
-	{
-		return nullptr;
-	}
+	ErrorIfFalse(!list.empty(), "Expected an expresion");
+
 	//Apply unary operators - do it in reverse order: op closer to terminal goes first
+	for (int ast_iter = list.size() - 2; ast_iter >= 0; --ast_iter)
 	{
-		auto ast_iter = list.rbegin();
-		for (++ast_iter; ast_iter != list.rend(); ++ast_iter)
+		ErrorIfFalse(ast_iter < static_cast<int>(list.size()), "Error..");
+		UnaryOpAST* const unary_ast = dynamic_cast<UnaryOpAST*>(list[ast_iter].get());
+		if (unary_ast)
 		{
-			UnaryOpAST* const unary_ast = dynamic_cast<UnaryOpAST*>(ast_iter->get());
-			if (unary_ast)
-			{
-				auto prev_elem = ast_iter; prev_elem--;
-				unary_ast->terminal = std::move(*prev_elem);
-				list.erase(prev_elem.base());
-			}
+			const int next_elem = ast_iter + 1;
+			unary_ast->terminal = std::move(list[next_elem]);
+			list.erase(list.begin() + next_elem);
 		}
 	}
 
@@ -561,21 +579,30 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		; op_data.precedence > 0
 		; op_data = database.GetNextOpWithLowerPrecedence(op_data.op))
 	{
-		auto ast_iter = list.begin();
-		for (++ast_iter; ast_iter != list.end(); ++ast_iter)
+		for (int ast_iter = 1; ast_iter < static_cast<int>(list.size());)
 		{
-			BinaryOpAST* const binary_ast = dynamic_cast<BinaryOpAST*>(ast_iter->get());
+			BinaryOpAST* const binary_ast = dynamic_cast<BinaryOpAST*>(list[ast_iter].get());
 			const bool match_precedence = binary_ast && (database.GetOperatorData(binary_ast->opcode).precedence == op_data.precedence);
-			if (match_precedence)
+			ErrorIfFalse(!binary_ast || (!binary_ast->lhs) == (!binary_ast->rhs), "Binary operator was not fully parsed");
+			if (match_precedence && !binary_ast->lhs && !binary_ast->rhs)
 			{
-				auto prev_iter = ast_iter; --prev_iter;
-				auto next_ptr = ast_iter;  ++next_ptr;
-				binary_ast->lhs = std::move(*prev_iter);
-				binary_ast->rhs = std::move(*next_ptr);
-				list.erase(prev_iter);
-				list.erase(next_ptr);
+				const auto prev_iter = ast_iter - 1;
+				const auto next_iter = ast_iter + 1;
+				binary_ast->lhs = std::move(list[prev_iter]);
+				binary_ast->rhs = std::move(list[next_iter]);
+				list.erase(list.begin() + next_iter);
+				list.erase(list.begin() + prev_iter);
+			}
+			else
+			{
+				++ast_iter;
 			}
 		}
 	}
-	return nullptr;
+	if (!ErrorIfFalse(list.size() == 1, "Expected single expression"))
+	{
+		return nullptr;
+	}
+
+	return std::move(list.back());
 }

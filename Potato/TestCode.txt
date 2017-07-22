@@ -1,0 +1,30 @@
+module test;
+import std;
+
+class MyTest
+{
+	mutable string str_val;
+	mutable_ref SomeObject^ obj_ref;
+	function int Execute(int int_value, mutable SomeObject^ in_ref) mutable
+	{
+		for(int i = 9; i < GetMax(); i+=1)
+		{
+			mutable int foo = in_ref.CallSth("why me?", -0.0234
+				, -(4 + int_value)/(4 - int_value));
+			if(foo < 4)
+			{
+				CallFunc(foo, in_ref);
+			}
+			else
+			{
+				break;
+			}
+		}
+		return int_value + -(4 % -int_value);
+	}
+}
+
+function void Main()
+{
+	return;
+}

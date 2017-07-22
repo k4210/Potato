@@ -1,7 +1,69 @@
 #pragma once
 
-#include "utils.h"
-#include <memory>
+enum class Token
+{
+	EndOfFile,
+
+	//keywords
+	Class,
+	Interface,
+	Struct,
+	Function,
+	This,
+	Object,
+	Null,
+	For,
+	Continue,
+	Break,
+	If,
+	Else,
+	Return,
+	Mutable,
+	Mutable_ref,
+	Private,
+	Public,
+	Const,
+	Virtual,
+	Operator,
+	Void,
+	True,
+	False,
+	Static,
+	Module,
+	Import,
+	Enum,
+	New,
+
+	// Parantesis, brackets, etc
+	OpenCurlyBracket, // {
+	CloseCurlyBracket, // }
+	OpenRoundBracket, // (
+	CloseRoundBracket, // )
+	Coma, // ,
+	ReferenceSign, // ^
+	OpenSquareBracket, // [
+	CloseSquareBracket, // ]
+	Semicolon, // ;
+	Dot, // .
+	QuestionMark, // ? 
+	Colon, // :
+
+	DoubleColon, // ::
+	Arrow, //->
+	DoubleDot, // ..
+
+	//The following tokens require a str value
+
+	//literals
+	IntValue,
+	FloatValue,
+	StringValue,
+
+	//other
+	OperatorExpr,
+	Identifier,
+	Error,
+};
 
 enum class EUnaryOperator
 {
@@ -40,16 +102,14 @@ enum class EBinaryOperator
 	Unknown
 };
 
-namespace llvm
-{
-	class Value;
-}
+class Context;
+struct Logger;
 
 class NodeAST
 {
 public:
 	virtual ~NodeAST() = default;
-	virtual llvm::Value *codegen() = 0;
+	virtual void codegen(Context& context) const = 0;
 	virtual void log(Logger& logger, const char* contect_str) const = 0;
 };
 
