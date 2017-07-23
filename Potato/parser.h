@@ -43,5 +43,5 @@ public:
 		: lexer_(lexer)
 	{}
 
-	std::unique_ptr<NodeAST> ParseModule();
+	std::unique_ptr<ModuleAST> ParseModule();
 };

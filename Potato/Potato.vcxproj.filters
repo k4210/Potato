@@ -21,13 +21,19 @@
     <ClCompile Include="parser.cpp">
       <Filter>Parser</Filter>
     </ClCompile>
-    <ClCompile Include="code_gen.cpp">
-      <Filter>Codegen</Filter>
-    </ClCompile>
     <ClCompile Include="operator_database.cpp">
       <Filter>Codegen</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="code_gen_implementation.cpp">
+      <Filter>Codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="code_gen.cpp">
+      <Filter>Codegen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ast_expression.h">
@@ -55,6 +61,9 @@
       <Filter>Parser</Filter>
     </ClInclude>
     <ClInclude Include="operator_database.h">
+      <Filter>Codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="context.h">
       <Filter>Codegen</Filter>
     </ClInclude>
   </ItemGroup>

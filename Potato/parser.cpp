@@ -241,7 +241,7 @@ std::unique_ptr<ClassAST> Parser::ParseClass()
 	return class_ast;
 }
 
-std::unique_ptr<NodeAST> Parser::ParseModule()
+std::unique_ptr<ModuleAST> Parser::ParseModule()
 {
 	std::unique_ptr<ModuleAST> module = std::make_unique<ModuleAST>();
 	if (Optional(Token::Module))
@@ -304,7 +304,6 @@ std::unique_ptr<NodeAST> Parser::ParseFlowControl()
 		auto for_ast = std::make_unique<ForExprAST>();
 		Expected(Token::OpenRoundBracket);
 		for_ast->start = Optional(Token::Semicolon) ? nullptr : ParseWholeExpressionLine();
-		//Expected(Token::Semicolon);
 		for_ast->condition = ParseExpression();
 		Expected(Token::Semicolon);
 		if (!Optional(Token::CloseRoundBracket))
