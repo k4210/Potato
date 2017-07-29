@@ -18,15 +18,15 @@ protected:
 	Lexer& lexer_;
 
 public:
-	bool Expected(Token expected_token, const char* error_msg = nullptr);
-	bool Expected(Token expected_token, std::string& out_str, const char* error_msg = nullptr);
-	bool Optional(Token token);
-	bool Optional(Token token, std::string& out_str);
+	bool Expected(EToken expected_token, const char* error_msg = nullptr);
+	bool Expected(EToken expected_token, std::string& out_str, const char* error_msg = nullptr);
+	bool Optional(EToken token);
+	bool Optional(EToken token, std::string& out_str);
 	bool ShouldContinue();
 
 	VariableData ParseMemberField();
 	TypeData ParseType(bool allow_void = false);
-	AccessSpecifier ParseOptionalAccessSpecifier();
+	EAccessSpecifier ParseOptionalAccessSpecifier();
 	void LogError(const char* msg1, const char* msg2 = nullptr);
 
 	std::unique_ptr<StructureAST> ParseStruct();

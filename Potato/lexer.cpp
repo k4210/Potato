@@ -5,51 +5,51 @@
 Lexer::Lexer()
 	: last_read_char_(' ')
 {
-	alpha_token_map_.emplace("class", Token::Class);
-	alpha_token_map_.emplace("interface", Token::Interface);
-	alpha_token_map_.emplace("struct", Token::Struct);
-	alpha_token_map_.emplace("function", Token::Function);
-	alpha_token_map_.emplace("this", Token::This);
-	alpha_token_map_.emplace("object", Token::Object);
-	alpha_token_map_.emplace("null", Token::Null);
-	alpha_token_map_.emplace("for", Token::For);
-	alpha_token_map_.emplace("break", Token::Break);
-	alpha_token_map_.emplace("continue", Token::Continue);
-	alpha_token_map_.emplace("if", Token::If);
-	alpha_token_map_.emplace("else", Token::Else);
-	alpha_token_map_.emplace("return", Token::Return);
-	alpha_token_map_.emplace("mutable", Token::Mutable);
-	alpha_token_map_.emplace("mutable_ref", Token::Mutable_ref);
-	alpha_token_map_.emplace("private", Token::Private);
-	alpha_token_map_.emplace("public", Token::Public);
-	alpha_token_map_.emplace("const", Token::Const);
-	alpha_token_map_.emplace("virtual", Token::Virtual);
-	alpha_token_map_.emplace("operator", Token::Operator);
-	alpha_token_map_.emplace("void", Token::Void);
-	alpha_token_map_.emplace("true", Token::True);
-	alpha_token_map_.emplace("false", Token::False);
-	alpha_token_map_.emplace("static", Token::Static);
-	alpha_token_map_.emplace("module", Token::Module);
-	alpha_token_map_.emplace("import", Token::Import);
-	alpha_token_map_.emplace("enum", Token::Enum);
-	alpha_token_map_.emplace("new", Token::New);
+	alpha_token_map_.emplace("class", EToken::Class);
+	alpha_token_map_.emplace("interface", EToken::Interface);
+	alpha_token_map_.emplace("struct", EToken::Struct);
+	alpha_token_map_.emplace("function", EToken::Function);
+	alpha_token_map_.emplace("this", EToken::This);
+	alpha_token_map_.emplace("object", EToken::Object);
+	alpha_token_map_.emplace("null", EToken::Null);
+	alpha_token_map_.emplace("for", EToken::For);
+	alpha_token_map_.emplace("break", EToken::Break);
+	alpha_token_map_.emplace("continue", EToken::Continue);
+	alpha_token_map_.emplace("if", EToken::If);
+	alpha_token_map_.emplace("else", EToken::Else);
+	alpha_token_map_.emplace("return", EToken::Return);
+	alpha_token_map_.emplace("mutable", EToken::Mutable);
+	alpha_token_map_.emplace("mutable_ref", EToken::Mutable_ref);
+	alpha_token_map_.emplace("private", EToken::Private);
+	alpha_token_map_.emplace("public", EToken::Public);
+	alpha_token_map_.emplace("const", EToken::Const);
+	alpha_token_map_.emplace("virtual", EToken::Virtual);
+	alpha_token_map_.emplace("operator", EToken::Operator);
+	alpha_token_map_.emplace("void", EToken::Void);
+	alpha_token_map_.emplace("true", EToken::True);
+	alpha_token_map_.emplace("false", EToken::False);
+	alpha_token_map_.emplace("static", EToken::Static);
+	alpha_token_map_.emplace("module", EToken::Module);
+	alpha_token_map_.emplace("import", EToken::Import);
+	alpha_token_map_.emplace("enum", EToken::Enum);
+	alpha_token_map_.emplace("new", EToken::New);
 
-	two_signs_nonalpha_token_map_.emplace("..", Token::DoubleDot);
-	two_signs_nonalpha_token_map_.emplace("->", Token::Arrow);
-	two_signs_nonalpha_token_map_.emplace("::", Token::DoubleColon);
+	two_signs_nonalpha_token_map_.emplace("..", EToken::DoubleDot);
+	two_signs_nonalpha_token_map_.emplace("->", EToken::Arrow);
+	two_signs_nonalpha_token_map_.emplace("::", EToken::DoubleColon);
 
-	single_nonalpha_token_map_.emplace('{', Token::OpenCurlyBracket);
-	single_nonalpha_token_map_.emplace('}', Token::CloseCurlyBracket);
-	single_nonalpha_token_map_.emplace('(', Token::OpenRoundBracket);
-	single_nonalpha_token_map_.emplace(')', Token::CloseRoundBracket);
-	single_nonalpha_token_map_.emplace(',', Token::Coma);
-	single_nonalpha_token_map_.emplace('^', Token::ReferenceSign);
-	single_nonalpha_token_map_.emplace('[', Token::OpenSquareBracket);
-	single_nonalpha_token_map_.emplace(']', Token::CloseSquareBracket);
-	single_nonalpha_token_map_.emplace(';', Token::Semicolon);
-	single_nonalpha_token_map_.emplace('.', Token::Dot);
-	single_nonalpha_token_map_.emplace('?', Token::QuestionMark);
-	single_nonalpha_token_map_.emplace(':', Token::Colon);
+	single_nonalpha_token_map_.emplace('{', EToken::OpenCurlyBracket);
+	single_nonalpha_token_map_.emplace('}', EToken::CloseCurlyBracket);
+	single_nonalpha_token_map_.emplace('(', EToken::OpenRoundBracket);
+	single_nonalpha_token_map_.emplace(')', EToken::CloseRoundBracket);
+	single_nonalpha_token_map_.emplace(',', EToken::Coma);
+	single_nonalpha_token_map_.emplace('^', EToken::ReferenceSign);
+	single_nonalpha_token_map_.emplace('[', EToken::OpenSquareBracket);
+	single_nonalpha_token_map_.emplace(']', EToken::CloseSquareBracket);
+	single_nonalpha_token_map_.emplace(';', EToken::Semicolon);
+	single_nonalpha_token_map_.emplace('.', EToken::Dot);
+	single_nonalpha_token_map_.emplace('?', EToken::QuestionMark);
+	single_nonalpha_token_map_.emplace(':', EToken::Colon);
 }
 
 void Lexer::RegisterOperatorString(const char* str)
@@ -65,7 +65,7 @@ void Lexer::RegisterOperatorString(const char* str)
 	}
 	else
 	{
-		Utils::LogError(GetCodeLocation(), "Lexer::RegisterOperatorString wrong size of: ", str);
+		Utils::LogError(GetCodeLocation().c_str(), "Lexer::RegisterOperatorString wrong size of: ", str);
 	}
 }
 namespace 
@@ -83,7 +83,7 @@ namespace
 	}
 }
 
-bool Lexer::Consume(Token token)
+bool Lexer::Consume(EToken token)
 {
 	if (current_token_.token == token)
 	{
@@ -93,7 +93,7 @@ bool Lexer::Consume(Token token)
 	return false;
 }
 
-bool Lexer::Consume(Token token, std::string& out_str)
+bool Lexer::Consume(EToken token, std::string& out_str)
 {
 	if (current_token_.token == token)
 	{
@@ -106,7 +106,7 @@ bool Lexer::Consume(Token token, std::string& out_str)
 
 void Lexer::ReadNextToken()
 {
-	if (Token::EndOfFile == current_token_.token || Token::Error == current_token_.token)
+	if (EToken::EndOfFile == current_token_.token || EToken::Error == current_token_.token)
 	{
 		return;
 	}
@@ -151,7 +151,7 @@ void Lexer::ReadNextToken()
 
 	if (last_read_char_ == EOF)
 	{
-		current_token_ = TokenData(Token::EndOfFile);
+		current_token_ = TokenData(EToken::EndOfFile);
 	}
 	else if (isalpha(last_read_char_) || (last_read_char_ == '_'))
 	{
@@ -166,7 +166,7 @@ void Lexer::ReadNextToken()
 			const auto found = alpha_token_map_.find(idententifier);
 			return (found != alpha_token_map_.end())
 				? TokenData(found->second)
-				: TokenData(Token::Identifier, idententifier);
+				: TokenData(EToken::Identifier, idententifier);
 		};
 		current_token_ = read_alphanum_token();
 	}
@@ -188,10 +188,10 @@ void Lexer::ReadNextToken()
 			} while (isdigit(last_read_char_) || last_read_char_ == kDot);
 			if (dot_number > 1)
 			{
-				Utils::LogError(GetCodeLocation(),"Lexer error - too many dots in number: ", number_string.c_str());
-				return TokenData(Token::Error, number_string);
+				Utils::LogError(GetCodeLocation().c_str(),"Lexer error - too many dots in number: ", number_string.c_str());
+				return TokenData(EToken::Error, number_string);
 			}
-			const Token token = (0 == dot_number) ? Token::IntValue : Token::FloatValue;
+			const EToken token = (0 == dot_number) ? EToken::IntValue : EToken::FloatValue;
 			return TokenData(token, number_string);
 		};
 		current_token_ = read_number_token();
@@ -210,10 +210,10 @@ void Lexer::ReadNextToken()
 			if (last_read_char_ != EOF)
 			{
 				last_read_char_ = getchar();
-				return TokenData(Token::StringValue, str_value);
+				return TokenData(EToken::StringValue, str_value);
 			}
 			Utils::LogError("Lexer error - never ending string");
-			return TokenData(Token::Error, str_value);
+			return TokenData(EToken::Error, str_value);
 		};
 		current_token_ = read_string_token();
 	}
@@ -236,7 +236,7 @@ void Lexer::ReadNextToken()
 			if (two_sign_op_found)
 			{
 				last_read_char_ = getchar();
-				return TokenData(Token::OperatorExpr, two_signs);
+				return TokenData(EToken::OperatorExpr, two_signs);
 			}
 
 			auto found_single_nonalpha_token = single_nonalpha_token_map_.find(two_signs[0]);
@@ -250,10 +250,10 @@ void Lexer::ReadNextToken()
 			if (single_sign_op_found)
 			{
 				//next char was already read;
-				return TokenData(Token::OperatorExpr, StringFromSingleSign(two_signs[0]));
+				return TokenData(EToken::OperatorExpr, StringFromSingleSign(two_signs[0]));
 			}
-			Utils::LogError(GetCodeLocation(), "Lexer error - unknown operator: ", two_signs.c_str());
-			return TokenData(Token::Error, two_signs);
+			Utils::LogError(GetCodeLocation().c_str(), "Lexer error - unknown operator: ", two_signs.c_str());
+			return TokenData(EToken::Error, two_signs);
 		};
 		current_token_ = read_nonalphanum_stuff();
 	}
@@ -276,11 +276,11 @@ void Lexer::Start(const char* filename)
 
 	if (!input_stream_.is_open())
 	{
-		current_token_.token = Token::Error;
+		current_token_.token = EToken::Error;
 		Utils::LogError("Lexer::Start failed to open file", filename);
 		return;
 	}
-	current_token_.token = Token::Void;
+	current_token_.token = EToken::Void;
 	last_read_char_ = ' ';
 	ReadNextToken();
 }

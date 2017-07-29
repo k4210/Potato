@@ -6,17 +6,18 @@
 
 class ControlFlowAST : public NodeAST
 {
+	virtual void codegen(Context& context) const = 0;
 };
 
 class CodeScopeAST : public ControlFlowAST
 {
 public:
-	std::vector<std::unique_ptr<NodeAST>> code;
+	std::vector<std::unique_ptr<NodeAST>> code_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "CodeScopeAST");
 		logger.IncreaseIndent();
-		for (auto& arg : code)
+		for (auto& arg : code_)
 		{
 			arg->log(logger, "line");
 		}
@@ -28,24 +29,24 @@ public:
 class IfAST : public ControlFlowAST
 {
 public:
-	std::unique_ptr<ExprAST> condition;
-	std::unique_ptr<NodeAST> if_true;
-	std::unique_ptr<NodeAST> otherwise;
+	std::unique_ptr<ExprAST> condition_;
+	std::unique_ptr<NodeAST> if_true_;
+	std::unique_ptr<NodeAST> otherwise_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "IfAST");
 		logger.IncreaseIndent();
-		if (condition)
+		if (condition_)
 		{
-			condition->log(logger, "condition");
+			condition_->log(logger, "condition");
 		}
-		if (if_true)
+		if (if_true_)
 		{
-			if_true->log(logger, "if_true");
+			if_true_->log(logger, "if_true");
 		}
-		if (otherwise)
+		if (otherwise_)
 		{
-			otherwise->log(logger, "otherwise");
+			otherwise_->log(logger, "otherwise");
 		}
 		logger.DecreaseIndent();
 	}
@@ -55,27 +56,27 @@ public:
 class ForExprAST : public ControlFlowAST 
 {
 public:
-	std::unique_ptr<ExprAST> start, condition, step;
-	std::unique_ptr<NodeAST> body;
+	std::unique_ptr<ExprAST> start_, condition_, step_;
+	std::unique_ptr<NodeAST> body_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "ForExprAST");
 		logger.IncreaseIndent();
-		if (start)
+		if (start_)
 		{
-			start->log(logger, "start");
+			start_->log(logger, "start");
 		}
-		if (condition)
+		if (condition_)
 		{
-			condition->log(logger, "condition");
+			condition_->log(logger, "condition");
 		}
-		if (step)
+		if (step_)
 		{
-			step->log(logger, "step");
+			step_->log(logger, "step");
 		}
-		if (body)
+		if (body_)
 		{
-			body->log(logger, "body");
+			body_->log(logger, "body");
 		}
 		logger.DecreaseIndent();
 	}
@@ -105,14 +106,14 @@ public:
 class ReturnAST : public ControlFlowAST
 {
 public:
-	std::unique_ptr<ExprAST> value;
+	std::unique_ptr<ExprAST> value_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "ReturnAST");
 		logger.IncreaseIndent();
-		if (value)
+		if (value_)
 		{
-			value->log(logger, "value");
+			value_->log(logger, "value");
 		}
 		logger.DecreaseIndent();
 	}

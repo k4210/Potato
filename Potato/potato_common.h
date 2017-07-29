@@ -1,6 +1,8 @@
 #pragma once
 
-enum class Token
+#include "utils.h"
+
+enum class EToken
 {
 	EndOfFile,
 
@@ -102,34 +104,50 @@ enum class EBinaryOperator
 	Unknown
 };
 
+enum class EFunctionType
+{
+	Global,
+	Static,
+	Class, //can be virtual
+	Struct,//cannot be virtual
+	ClassConstructor,
+	StructConstructor,
+	StructDestructor
+};
+
 class Context;
 struct Logger;
+namespace llvm
+{
+	class Value;
+}
 
 class NodeAST
 {
 public:
 	virtual ~NodeAST() = default;
-	virtual void codegen(Context& context) const = 0;
 	virtual void log(Logger& logger, const char* contect_str) const = 0;
 };
 
-enum class AccessSpecifier
+enum class EAccessSpecifier
 {
-	Default,
 	Private,
+	Default,
 	Public,
 };
 
-enum class MutableSpecifier : unsigned int
+enum class EMutableSpecifier : unsigned int
 {
 	None		= 0,
 	Mutable		= 1 << 0,
 	MutableRef	= 1 << 1,
 };
 
-enum class EType
+enum class EVarType
 {
-	Value,
+	Int,
+	Float,
+	ValueStruct,
 	Reference,
 	Void
 };
@@ -137,21 +155,21 @@ enum class EType
 struct TypeData
 {
 	std::string name;
-	unsigned int mutable_specifiers = 0;
-	EType type = EType::Value;
+	Flag32<EMutableSpecifier> mutable_specifiers;
+	EVarType type = EVarType::Void;
 	std::string ToString() const
 	{
 		std::string result;
-		if (0 != (mutable_specifiers & static_cast<unsigned int>(MutableSpecifier::MutableRef)))
+		if (mutable_specifiers.Get(EMutableSpecifier::MutableRef))
 		{
 			result += "mutable_ref ";
 		}
-		if (0 != (mutable_specifiers & static_cast<unsigned int>(MutableSpecifier::Mutable)))
+		if (mutable_specifiers.Get(EMutableSpecifier::Mutable))
 		{
 			result += "mutable ";
 		}
 		result += name;
-		if (type == EType::Reference)
+		if (type == EVarType::Reference)
 		{
 			result += "^";
 		}
@@ -163,16 +181,16 @@ struct VariableData
 {
 	TypeData type_data;
 	std::string name;
-	AccessSpecifier access_specifier = AccessSpecifier::Default;
+	EAccessSpecifier access_specifier = EAccessSpecifier::Default;
 
 	std::string ToString() const
 	{
 		std::string result;
-		if (access_specifier == AccessSpecifier::Private)
+		if (access_specifier == EAccessSpecifier::Private)
 		{
 			result += "private ";
 		}
-		if (access_specifier == AccessSpecifier::Public)
+		if (access_specifier == EAccessSpecifier::Public)
 		{
 			result += "public ";
 		}

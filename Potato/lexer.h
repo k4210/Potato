@@ -6,18 +6,18 @@ class Lexer
 {
 	struct TokenData
 	{
-		Token token;
+		EToken token;
 		std::string string_value;
 
 		TokenData() 
-			: token(Token::Error)
+			: token(EToken::Error)
 		{}
 
-		TokenData(Token in_token) 
+		TokenData(EToken in_token) 
 			: token(in_token)
 		{}
 
-		TokenData(Token in_token, const std::string& in_string) 
+		TokenData(EToken in_token, const std::string& in_string) 
 			: token(in_token)
 			, string_value(in_string) 
 		{}
@@ -27,9 +27,9 @@ class Lexer
 	int last_read_char_;
 
 	//maps of context-free tokens
-	std::map<std::string, Token> alpha_token_map_;
-	std::map<int, Token> single_nonalpha_token_map_;
-	std::map<std::string, Token> two_signs_nonalpha_token_map_;
+	std::map<std::string, EToken> alpha_token_map_;
+	std::map<int, EToken> single_nonalpha_token_map_;
+	std::map<std::string, EToken> two_signs_nonalpha_token_map_;
 
 	std::set<int> one_sign_operators_;
 	std::set<std::string> two_signs_operators_;
@@ -47,9 +47,9 @@ public:
 
 	std::string GetCodeLocation() const;
 
-	bool Consume(Token token);
-	bool Consume(Token token, std::string& out_str);
-	bool CheckTokenDontProceed(Token token) const
+	bool Consume(EToken token);
+	bool Consume(EToken token, std::string& out_str);
+	bool CheckTokenDontProceed(EToken token) const
 	{
 		return (current_token_.token == token);
 	}

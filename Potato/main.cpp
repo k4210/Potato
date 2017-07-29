@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "ast_structure.h"
 
-bool CodeGen(ModuleAST* module_root);
+bool CodeGen(ModuleAST* module_root, const std::string& file_name);
 
 void InitializeLexer(Lexer& lexer)
 {
@@ -24,23 +24,23 @@ int main(int argc, char *argv[])
 {
 	auto WaitForUserToExit = []()
 	{
-		printf("Press return to exit..");
+		Utils::Log("Press return to exit..");
 		getchar();
 	};
 
 	if (argc < 2)
 	{
-		fprintf(stderr, "No file specified!\n");
+		Utils::LogError("No file specified!\n");
 		WaitForUserToExit();
 		return EXIT_FAILURE;
 	}
 
-	Lexer lexer;
-	InitializeLexer(lexer);
+	Utils::Log("Potato is ready! File:", argv[1]);
 
 	std::unique_ptr<ModuleAST> module_ast;
 	{
-		fprintf(stderr, "Potato is ready! File: %s\n", argv[1]);
+		Lexer lexer;
+		InitializeLexer(lexer);
 		lexer.Start(argv[1]);
 		Parser parser(lexer);
 		module_ast = parser.ParseModule();
@@ -53,8 +53,9 @@ int main(int argc, char *argv[])
 			Logger logger;
 			module_ast->log(logger, "root");
 		}
-
-		CodeGen(module_ast.get());
+		Utils::LogSuccess("PARSED SUCCESSFULLY!");
+		Utils::Log("Codegen:");
+		CodeGen(module_ast.get(), argv[1]);
 	}
 
 	WaitForUserToExit();

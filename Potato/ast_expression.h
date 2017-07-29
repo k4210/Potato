@@ -6,207 +6,205 @@
 
 class ExprAST : public NodeAST
 {
-	// it suppose to return a value (or call a void function)
+	virtual llvm::Value* codegen(Context& context) const = 0;
 };
 
 class LiteralFloatAST : public ExprAST
 {
 public:
-	const double val;
+	const double value_;
 
-	LiteralFloatAST(double in_val)
-		: val(in_val)
+	LiteralFloatAST(double value)
+		: value_(value)
 	{}
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[512];
-		sprintf_s(buff, "LiteralFloatAST %f", val);
-		logger.PrintLine(contect_str, buff);
+		logger.PrintLine(contect_str, "LiteralFloatAST:", std::to_string(value_).c_str());
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class LiteralIntegerAST : public ExprAST
 {
 public:
-	const int val;
+	const int value_;
 
-	LiteralIntegerAST(int in_val)
-		: val(in_val)
+	LiteralIntegerAST(int value)
+		: value_(value)
 	{}
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[512];
-		sprintf_s(buff, "LiteralIntegerAST %i", val);
-		logger.PrintLine(contect_str, buff);
+		logger.PrintLine(contect_str, "LiteralIntegerAST:", std::to_string(value_).c_str());
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class LiteralStringAST : public ExprAST
 {
 public:
-	const std::string val;
+	const std::string value_;
 
-	LiteralStringAST(const std::string& in_val)
-		: val(in_val)
+	LiteralStringAST(const std::string& value)
+		: value_(value)
 	{}
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[1024];
-		sprintf_s(buff, "LiteralStringAST \"%s\"", val.c_str());
-		logger.PrintLine(contect_str, buff);
+		logger.PrintLine(contect_str, "LiteralStringAST:", value_.c_str());
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class LocalVariableDeclarationAST : public ExprAST
 {
 public:
-	const VariableData variable;
+	const VariableData variable_;
 
-	LocalVariableDeclarationAST(VariableData in_variable)
-		: variable(in_variable) //move?
+	LocalVariableDeclarationAST(VariableData variable)
+		: variable_(variable) //move?
 	{}
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[1024];
-		sprintf_s(buff, "LocalVariableDeclarationAST %s", variable.ToString().c_str());
-		logger.PrintLine(contect_str, buff);
+		logger.PrintLine(contect_str, "LocalVariableDeclarationAST:", variable_.ToString().c_str());
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class VariableExprAST : public ExprAST 
 {
 public:
-	std::string name;
-	std::unique_ptr<ExprAST> context;
+	std::string name_;
+	std::unique_ptr<ExprAST> context_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[1024];
-		sprintf_s(buff, "VariableExprAST %s", name.c_str());
-		logger.PrintLine(contect_str, buff);
-		if (context)
+		logger.PrintLine(contect_str, "VariableExprAST:", name_.c_str());
+		if (context_)
 		{
 			logger.IncreaseIndent();
-			context->log(logger, "context");
+			context_->log(logger, "context");
 			logger.DecreaseIndent();
 		}
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class UnaryOpAST : public ExprAST 
 {
 public:
-	EUnaryOperator opcode;
-	std::unique_ptr<ExprAST> terminal;
-	TypeData type_for_cast;
+	EUnaryOperator opcode_;
+	std::unique_ptr<ExprAST> terminal_;
+	TypeData type_for_cast_;
 
-	UnaryOpAST(EUnaryOperator in_opcode)
-		: opcode(in_opcode)
+	UnaryOpAST(EUnaryOperator opcode)
+		: opcode_(opcode)
 	{}
 
-	UnaryOpAST(EUnaryOperator in_opcode, const TypeData& in_type)
-		: opcode(in_opcode)
-		, type_for_cast(in_type)
+	UnaryOpAST(EUnaryOperator opcode, const TypeData& type_for_cast)
+		: opcode_(opcode)
+		, type_for_cast_(type_for_cast)
 	{}
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[1024];
-		const OperatorId op_id = UnaryOperatorDatabase::Get().GetOperatorData(opcode).name;
-		std::string type_str;
-		if (opcode == EUnaryOperator::Cast)
-		{
-			type_str = type_for_cast.ToString();
-		}
-		sprintf_s(buff, "UnaryOpAST %s %s", op_id.c_str(), type_str.c_str());
-		logger.PrintLine(contect_str, buff);
-		if (terminal)
+		const OperatorId op_id = UnaryOperatorDatabase::Get().GetOperatorData(opcode_).name;
+		logger.PrintLine(contect_str, "UnaryOpAST:", op_id.c_str());
+		if (opcode_ == EUnaryOperator::Cast)
 		{
 			logger.IncreaseIndent();
-			terminal->log(logger, "terminal");
+			logger.PrintLine("type:", type_for_cast_.ToString().c_str());
+			logger.DecreaseIndent();
+		}
+		if (terminal_)
+		{
+			logger.IncreaseIndent();
+			terminal_->log(logger, "terminal");
 			logger.DecreaseIndent();
 		}
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class BinaryOpAST : public ExprAST 
 {
 public:
-	EBinaryOperator opcode;
-	std::unique_ptr<ExprAST> lhs, rhs;
+	EBinaryOperator opcode_;
+	std::unique_ptr<ExprAST> lhs_, rhs_;
 
 	BinaryOpAST(EBinaryOperator in_opcode)
-		: opcode(in_opcode) 
+		: opcode_(in_opcode)
 	{}
 
 	BinaryOpAST(EBinaryOperator in_opcode, std::unique_ptr<ExprAST> in_lhs, std::unique_ptr<ExprAST> in_rhs)
-		: opcode(in_opcode)
-		, lhs(std::move(in_lhs))
-		, rhs(std::move(in_rhs))
+		: opcode_(in_opcode)
+		, lhs_(std::move(in_lhs))
+		, rhs_(std::move(in_rhs))
 	{}
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[1024];
-		const OperatorId op_id = BinaryOperatorDatabase::Get().GetOperatorData(opcode).name;
-		sprintf_s(buff, "BinaryOpAST %s", op_id.c_str());
-		logger.PrintLine(contect_str, buff);
+		const OperatorId op_id = BinaryOperatorDatabase::Get().GetOperatorData(opcode_).name;
+		logger.PrintLine(contect_str, "BinaryOpAST:", op_id.c_str());
 		logger.IncreaseIndent();
-		if (lhs)
+		if (lhs_)
 		{
-			lhs->log(logger, "lhs");
+			lhs_->log(logger, "lhs");
 		}
-		if (rhs)
+		if (rhs_)
 		{
-			rhs->log(logger, "rhs");
+			rhs_->log(logger, "rhs");
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class CallExprAST : public ExprAST 
 {
 public:
-	std::string function_name;
-	std::unique_ptr<ExprAST> context;
-	std::vector<std::unique_ptr<ExprAST>> args;
+	std::string function_name_;
+	std::unique_ptr<ExprAST> context_;
+	std::vector<std::unique_ptr<ExprAST>> args_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		char buff[1024];
-		sprintf_s(buff, "CallExprAST %s", function_name.c_str());
-		logger.PrintLine(contect_str, buff);
+		logger.PrintLine(contect_str, "CallExprAST:", function_name_.c_str());
 		logger.IncreaseIndent();
-		if (context)
+		if (context_)
 		{
-			context->log(logger, "context");
+			context_->log(logger, "context");
 		}
-		for(auto& arg : args)
+		for(auto& arg : args_)
 		{
 			arg->log(logger, "param");
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	llvm::Value* codegen(Context& context) const override;
 };
 
 class TernaryOpAst : public ExprAST
 {
-	std::unique_ptr<ExprAST> condition, if_true, if_false;
-
 public:
-	TernaryOpAst(std::unique_ptr<ExprAST> in_condition, std::unique_ptr<ExprAST> in_if_true, std::unique_ptr<ExprAST> in_if_false)
-		: condition(std::move(in_condition))
-		, if_true(std::move(in_if_true))
-		, if_false(std::move(in_if_false))
-	{}
+	std::unique_ptr<ExprAST> condition_, if_true_, if_false_;
+
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "TernaryOpAst");
+		logger.IncreaseIndent();
+		if (condition_)
+		{
+			condition_->log(logger, "condition");
+		}
+		if (if_true_)
+		{
+			if_true_->log(logger, "if_true");
+		}
+		if (if_false_)
+		{
+			if_false_->log(logger, "if_false");
+		}
+		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	bool IsInitialized() const 
+	{
+		return condition_ && if_true_ && if_false_;
+	}
+	llvm::Value* codegen(Context& context) const override;
 };
 

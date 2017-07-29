@@ -35,9 +35,6 @@
 #include "llvm/Target/TargetOptions.h"
 #pragma warning( pop ) 
 
-#include <ctype.h>
-#include <cstdio>
-
 #include <string>
 #include <memory>
 
@@ -50,3 +47,4 @@
 #include <algorithm>
 
 #include <fstream>
+#include <assert.h>
