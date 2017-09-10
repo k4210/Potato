@@ -103,7 +103,17 @@ struct TypeParserHelper
 			}
 		}
 
-		if (!parser.Optional(EToken::Identifier, out_type.name))
+		if (parser.Optional(EToken::Int, out_type.name))
+		{
+			out_type.type = EVarType::Int;
+			result = TypeParseResult::Type;
+		}
+		else if (parser.Optional(EToken::Float, out_type.name))
+		{
+			out_type.type = EVarType::Float;
+			result = TypeParseResult::Type;
+		}
+		else if (!parser.Optional(EToken::Identifier, out_type.name))
 		{
 			if (TypeParseResult::Type == result)
 			{
@@ -115,6 +125,11 @@ struct TypeParserHelper
 		{
 			result = TypeParseResult::JustId;
 		}
+		else if (TypeParseResult::Type == result)
+		{
+			out_type.type = EVarType::ValueStruct;
+		}
+
 		if (parser.Optional(EToken::ReferenceSign))
 		{
 			out_type.type = EVarType::Reference;
@@ -129,7 +144,11 @@ TypeData Parser::ParseType(bool allow_void)
 	TypeData type_data;
 	const TypeParserHelper::TypeParseResult result = TypeParserHelper::OptionalParseType(*this, allow_void, type_data);
 	const bool valid_type = (result == TypeParserHelper::TypeParseResult::Type) || (result == TypeParserHelper::TypeParseResult::JustId);
-	if (!valid_type)
+	if(result == TypeParserHelper::TypeParseResult::JustId)
+	{
+		type_data.type = EVarType::ValueStruct;
+	}
+	if (!valid_type || !type_data.Validate())
 	{
 		LogError("Parser::ParseType", "Expected a type");
 	}
@@ -164,7 +183,7 @@ VariableData Parser::ParseMemberField()
 std::unique_ptr<StructureAST> Parser::ParseStruct()
 {
 	std::unique_ptr<StructureAST> structure = std::make_unique<StructureAST>();
-	Expected(EToken::Identifier, structure->name_, "Expected struct name");
+	Expected(EToken::Identifier, structure->name, "Expected struct name");
 	Expected(EToken::OpenCurlyBracket, "Expected open scope");
 	while(ShouldContinue())
 	{
@@ -180,10 +199,10 @@ std::unique_ptr<StructureAST> Parser::ParseStruct()
 
 std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 {
-	std::unique_ptr<FunctionDeclarationAST> function = std::make_unique<FunctionDeclarationAST>();
-	function->acces_specifier_ = ParseOptionalAccessSpecifier();
-	function->return_type_ = ParseType(true);
-	Expected(EToken::Identifier, function->name_, "Expected name");
+	FunctionData function;
+	function.acces_specifier = ParseOptionalAccessSpecifier();
+	function.return_type = ParseType(true);
+	Expected(EToken::Identifier, function.name, "Expected name");
 	Expected(EToken::OpenRoundBracket, "Expected (");
 	if (!Optional(EToken::CloseRoundBracket))
 	{
@@ -192,7 +211,7 @@ std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 			VariableData parameter;
 			parameter.type_data = ParseType();
 			Expected(EToken::Identifier, parameter.name, "Expected parameter name");
-			function->parameters_.push_back(parameter);
+			function.parameters.push_back(parameter);
 			if (Optional(EToken::CloseRoundBracket))
 			{
 				break;
@@ -200,19 +219,22 @@ std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 			Expected(EToken::Coma, "Expecter ')' or ','");
 		}
 	}
-	function->is_mutable_ = Optional(EToken::Mutable);
+	function.is_mutable = Optional(EToken::Mutable) ? EFunctionMutable::Mutable : EFunctionMutable::Const;
+
+	std::unique_ptr<FunctionDeclarationAST> function_ast = std::make_unique<FunctionDeclarationAST>();
+	function_ast->function_data_ = function;
 	if (!Optional(EToken::Semicolon))
 	{
 		Expected(EToken::OpenCurlyBracket, "Expected {");
-		function->optional_body_ = ParseScope();
+		function_ast->optional_body_ = ParseScope();
 	}
-	return function;
+	return function_ast;
 }
 
 std::unique_ptr<ClassAST> Parser::ParseClass()
 {
 	std::unique_ptr<ClassAST> class_ast = std::make_unique<ClassAST>();
-	Expected(EToken::Identifier, class_ast->name_, "Expected struct name");
+	Expected(EToken::Identifier, class_ast->name, "Expected struct name");
 	if (Optional(EToken::Colon))
 	{
 		Expected(EToken::Identifier, class_ast->base_class_, "Expected base struct name");
@@ -242,7 +264,7 @@ std::unique_ptr<ModuleAST> Parser::ParseModule()
 	std::unique_ptr<ModuleAST> module = std::make_unique<ModuleAST>();
 	if (Optional(EToken::Module))
 	{
-		Expected(EToken::Identifier, module->name_, "Expected module name");
+		Expected(EToken::Identifier, module->name, "Expected module name");
 		Expected(EToken::Semicolon, "Expected ';'");
 	}
 	while (ShouldContinue())
@@ -361,7 +383,7 @@ std::unique_ptr<ExprAST> Parser::ParseWholeExpressionLine()
 	};
 
 	TypeData type_data;
-	TypeParserHelper::TypeParseResult result = TypeParserHelper::OptionalParseType(*this, false, type_data);
+	const TypeParserHelper::TypeParseResult result = TypeParserHelper::OptionalParseType(*this, false, type_data);
 	if (TypeParserHelper::TypeParseResult::NotAType == result)
 	{
 		return ParseTheRemainingExpression();
@@ -378,6 +400,10 @@ std::unique_ptr<ExprAST> Parser::ParseWholeExpressionLine()
 	}
 	else if (result == TypeParserHelper::TypeParseResult::Type)
 	{
+		if (!variable_data.type_data.Validate())
+		{
+			LogError("Parser::ParseWholeExpressionLine", "Invalid variable type");
+		}
 		Expected(EToken::Identifier, variable_data.name);
 	}
 	else
@@ -443,7 +469,7 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 			return call_ast;
 		}
 		auto variable_ast = std::make_unique<VariableExprAST>();
-		variable_ast->name_ = id;
+		variable_ast->name = id;
 		if (reuse_context && ErrorIfFalse(!list.empty(), "Expected context"))
 		{
 			variable_ast->context_ = std::move(list.back());
@@ -648,18 +674,23 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 	{
 		TernaryOpAst* const ternary_ast = dynamic_cast<TernaryOpAst*>(list[ast_iter].get());
 		if (!ternary_ast) continue;
+		const int exepected_index_condition = ast_iter - 1;
+		const int exepected_index_if_true = ast_iter + 1;
+		const int exepected_index_second_op = ast_iter + 2;
+		const int exepected_index_if_false = ast_iter + 3;
 		bool secondary_op_found = false;
 		{
-			auto temp_ast = (ast_iter + 3 < GetListSize()) ? dynamic_cast<TempSecondTernaryOpAst*>(list[ast_iter + 2].get()) : nullptr;
+			auto temp_ast = (exepected_index_if_false < GetListSize()) 
+				? dynamic_cast<TempSecondTernaryOpAst*>(list[exepected_index_second_op].get()) : nullptr;
 			secondary_op_found = temp_ast && temp_ast->primary_ast_ == ternary_ast;
 		}
-		if (ErrorIfFalse(secondary_op_found, "Missing ':' or the other wxpression"))
+		if (ErrorIfFalse(secondary_op_found, "Missing ':' or the other expression"))
 		{
-			ternary_ast->condition_ = std::move(list[ast_iter - 1]);
-			ternary_ast->if_true_ = std::move(list[ast_iter + 1]);
-			ternary_ast->if_false_ = std::move(list[ast_iter + 3]);
-			list.erase(list.begin() + ast_iter + 1, list.begin() + 4);
-			list.erase(list.begin() + ast_iter - 1);
+			ternary_ast->condition_ = std::move(list[exepected_index_condition]);
+			ternary_ast->if_true_ = std::move(list[exepected_index_if_true]);
+			ternary_ast->if_false_ = std::move(list[exepected_index_if_false]);
+			list.erase(list.begin() + exepected_index_if_true, list.begin() + exepected_index_if_false + 1);
+			list.erase(list.begin() + exepected_index_condition);
 			break;
 		}
 	}

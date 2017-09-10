@@ -6,6 +6,7 @@
 
 class ControlFlowAST : public NodeAST
 {
+public:
 	virtual void codegen(Context& context) const = 0;
 };
 

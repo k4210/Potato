@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "operator_database.h"
+#include "context.h"
 #include "utils.h"
+
 
 OperatorId::OperatorId(const char* in_name)
 {
@@ -35,57 +37,105 @@ UnaryOperatorDatabase::UnaryOperatorDatabase()
 	auto add = [&](const char* in_name, EUnaryOperator in_op)
 	{
 		const OperatorId id(in_name);
-		operators_map.emplace(in_op, OperatorData(id, in_op));
-		id_to_op.emplace(id, in_op);
+		operators_map_.emplace(in_op, OperatorData(id, in_op));
+		id_to_op_.emplace(id, in_op);
 	};
 
 	add("-", EUnaryOperator::Minus);
 	add("!", EUnaryOperator::Negation);
-	add("`", EUnaryOperator::ByteNegation);
+	add("~", EUnaryOperator::ByteNegation);
 }
 
 BinaryOperatorDatabase::BinaryOperatorDatabase()
 {
-	auto add = [&](const char* in_name, int in_precedence, EBinaryOperator in_op)
+	auto add = [&](const char* in_name
+		, int in_precedence
+		, EBinaryOperator in_op
+		, Flag32<EVarType> types
+		, CodegenFunction codegen)
 	{
 		const OperatorId id(in_name);
-		operators_map.emplace(in_op, OperatorData(id, in_precedence, in_op));
-		id_to_op.emplace(id, in_op);
-		op_sorted_by_precedence_descending.push_back(in_op);
+		operators_map_.emplace(in_op, OperatorData(id, in_precedence, in_op, types, codegen));
+		id_to_op_.emplace(id, in_op);
+		op_sorted_by_precedence_descending_.push_back(in_op);
 	};
-	add("=", 5, EBinaryOperator::Assign);
-	add("=?", 5, EBinaryOperator::AssignIfValidChain);
-	add("+=", 5, EBinaryOperator::AddAssign);
-	add("-=", 5, EBinaryOperator::SubAssign);
-	add("*=", 5, EBinaryOperator::MultiplyAssign);
-	add("/=", 5, EBinaryOperator::DivideAssign);
-	add("%=", 5, EBinaryOperator::ModuloAssign);
-	add("&=", 5, EBinaryOperator::AndAssign);
-	add("|=", 5, EBinaryOperator::OrAssign);
-	add("|", 10, EBinaryOperator::Or);
-	add("&", 15, EBinaryOperator::And);
-	add("==", 20, EBinaryOperator::Equal);
-	add("!=", 20, EBinaryOperator::NotEqual);
-	add(">=", 25, EBinaryOperator::GreaterOrEqual);
-	add("<=", 25, EBinaryOperator::LessOrEqual);
-	add("<", 25, EBinaryOperator::Less);
-	add(">", 25, EBinaryOperator::Greater);
-	add("+", 30, EBinaryOperator::Add);
-	add("-", 30, EBinaryOperator::Sub);
-	add("*", 35, EBinaryOperator::Multiply);
-	add("/", 35, EBinaryOperator::Divide);
-	add("%", 35, EBinaryOperator::Modulo);
+	add("=", 5, EBinaryOperator::Assign, EVarType::Int | EVarType::Float | EVarType::ValueStruct, nullptr);
+	add("=?", 5, EBinaryOperator::AssignIfValidChain, EVarType::Int | EVarType::Float | EVarType::ValueStruct, nullptr);
 
-	std::reverse(op_sorted_by_precedence_descending.begin(), op_sorted_by_precedence_descending.end());
+	add("+=", 5, EBinaryOperator::AddAssign, EVarType::Float | EVarType::Int, nullptr);
+	add("-=", 5, EBinaryOperator::SubAssign, EVarType::Float | EVarType::Int, nullptr);
+	add("*=", 5, EBinaryOperator::MultiplyAssign, EVarType::Float | EVarType::Int, nullptr);
+	add("/=", 5, EBinaryOperator::DivideAssign, EVarType::Float | EVarType::Int, nullptr);
+
+	add("%=", 5, EBinaryOperator::ModuloAssign, EVarType::Int, nullptr);
+	add("&=", 5, EBinaryOperator::AndAssign, EVarType::Int, nullptr);
+	add("|=", 5, EBinaryOperator::OrAssign, EVarType::Int, nullptr);
+
+	add("|", 10, EBinaryOperator::Or, EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateOr(lhs, rhs);
+	});
+	add("&", 15, EBinaryOperator::And, EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("==", 20, EBinaryOperator::Equal, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		const EVarType var_type = context.GetPotatoDataType(lhs->getType());
+		return (EVarType::Int == var_type) ? context.builder_.CreateICmpEQ(lhs, rhs) : context.builder_.CreateFCmpOEQ(lhs, rhs);
+	});
+	add("!=", 20, EBinaryOperator::NotEqual, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add(">=", 25, EBinaryOperator::GreaterOrEqual, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("<=", 25, EBinaryOperator::LessOrEqual, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("<", 25, EBinaryOperator::Less, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add(">", 25, EBinaryOperator::Greater, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("+", 30, EBinaryOperator::Add, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("-", 30, EBinaryOperator::Sub, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("*", 35, EBinaryOperator::Multiply, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+	add("/", 35, EBinaryOperator::Divide, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+
+	add("%", 35, EBinaryOperator::Modulo, EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	{
+		return context.builder_.CreateAnd(lhs, rhs);
+	});
+
+	std::reverse(op_sorted_by_precedence_descending_.begin(), op_sorted_by_precedence_descending_.end());
 }
 
 BinaryOperatorDatabase::OperatorData BinaryOperatorDatabase::GetNextOpWithLowerPrecedence(EBinaryOperator op) const
 {
-	auto found_iter = std::find(op_sorted_by_precedence_descending.begin(),op_sorted_by_precedence_descending.end(),op);
-	if (found_iter != op_sorted_by_precedence_descending.end())
+	auto found_iter = std::find(op_sorted_by_precedence_descending_.begin(),op_sorted_by_precedence_descending_.end(),op);
+	if (found_iter != op_sorted_by_precedence_descending_.end())
 	{
 		const int current_precedence = GetOperatorData(op).precedence;
-		for (++found_iter; found_iter != op_sorted_by_precedence_descending.end(); ++found_iter)
+		for (++found_iter; found_iter != op_sorted_by_precedence_descending_.end(); ++found_iter)
 		{
 			const OperatorData data = GetOperatorData(*found_iter);
 			if (current_precedence > data.precedence)
@@ -94,6 +144,6 @@ BinaryOperatorDatabase::OperatorData BinaryOperatorDatabase::GetNextOpWithLowerP
 			}
 		}
 	}
-	return OperatorData(nullptr, 0, EBinaryOperator::_Error);
+	return OperatorData();
 
 }

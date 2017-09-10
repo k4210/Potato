@@ -6,6 +6,7 @@
 
 class ExprAST : public NodeAST
 {
+public:
 	virtual llvm::Value* codegen(Context& context) const = 0;
 };
 
@@ -72,11 +73,11 @@ public:
 class VariableExprAST : public ExprAST 
 {
 public:
-	std::string name_;
+	std::string name;
 	std::unique_ptr<ExprAST> context_;
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		logger.PrintLine(contect_str, "VariableExprAST:", name_.c_str());
+		logger.PrintLine(contect_str, "VariableExprAST:", name.c_str());
 		if (context_)
 		{
 			logger.IncreaseIndent();

@@ -33,6 +33,8 @@ Lexer::Lexer()
 	alpha_token_map_.emplace("import", EToken::Import);
 	alpha_token_map_.emplace("enum", EToken::Enum);
 	alpha_token_map_.emplace("new", EToken::New);
+	alpha_token_map_.emplace("int", EToken::Int);
+	alpha_token_map_.emplace("flpat", EToken::Float);
 
 	two_signs_nonalpha_token_map_.emplace("..", EToken::DoubleDot);
 	two_signs_nonalpha_token_map_.emplace("->", EToken::Arrow);

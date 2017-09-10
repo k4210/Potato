@@ -1,23 +1,16 @@
 #pragma once
 
-struct VariableHandle
-{
-	std::string name_;
-	TypeData type_data_;
-	llvm::AllocaInst* alloca_ints_;
-};
-
-struct Scope
-{
-	//EFunctionType function_type;
-	std::string name_;
-	//std::string funcion_name;
-	std::map<std::string, VariableHandle> variables_;
-};
-
 class Context
 {
 public:
+	struct Scope
+	{
+		//EFunctionType function_type;
+		std::string name;
+		//std::string funcion_name;
+		std::map<std::string, VariableData> variables_;
+	};
+
 	Context();
 
 	llvm::LLVMContext the_context_;
@@ -27,8 +20,13 @@ public:
 	std::vector<Scope> scope_stack_;
 	llvm::Function* function_ = nullptr;
 
-	llvm::AllocaInst* FindVariable(const std::string& name) const;
-	bool AddVariable(VariableHandle variable);
+	llvm::Type* GetType(const TypeData& type_data);
+	EVarType Context::GetPotatoDataType(const llvm::Type* type_data);
+
+	llvm::Function* FindFunction(const std::string& name, const llvm::Value* optional_owner = nullptr) const;
+
+	llvm::AllocaInst* CreateLocalVariable(const VariableData& variable);
+	VariableData FindVariable(const std::string& name) const;
 	void OpenScope(const std::string& name)
 	{
 		scope_stack_.emplace_back(Scope{ name });
@@ -37,10 +35,8 @@ public:
 	{
 		scope_stack_.pop_back();
 	}
-	//class data
 
-	//function data
+private:
+	bool RegisterVariableOnCurrentScope(const VariableData& variable);
 
-	//scope data
-	// std::map<std::string, llvm::AllocaInst *> NamedValues;
 };

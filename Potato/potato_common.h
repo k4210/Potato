@@ -5,6 +5,7 @@
 enum class EToken
 {
 	EndOfFile,
+	Error,
 
 	//keywords
 	Class,
@@ -35,6 +36,8 @@ enum class EToken
 	Import,
 	Enum,
 	New,
+	Int, 
+	Float,
 
 	// Parantesis, brackets, etc
 	OpenCurlyBracket, // {
@@ -64,7 +67,6 @@ enum class EToken
 	//other
 	OperatorExpr,
 	Identifier,
-	Error,
 };
 
 enum class EUnaryOperator
@@ -120,6 +122,7 @@ struct Logger;
 namespace llvm
 {
 	class Value;
+	class Function;
 }
 
 class NodeAST
@@ -143,14 +146,21 @@ enum class EMutableSpecifier : unsigned int
 	MutableRef	= 1 << 1,
 };
 
+enum class EFunctionMutable : unsigned int
+{
+	Const,
+	Mutable,
+};
+
 enum class EVarType
 {
-	Int,
-	Float,
-	ValueStruct,
-	Reference,
-	Void
+	Void		= 0,
+	Int			= 1 << 0,
+	Float		= 1 << 1,
+	ValueStruct	= 1 << 2,
+	Reference	= 1 << 3,
 };
+inline Flag32<EVarType> operator|(EVarType a, EVarType b) { return Flag32<EVarType>(a, b); }
 
 struct TypeData
 {
@@ -168,6 +178,15 @@ struct TypeData
 		{
 			result += "mutable ";
 		}
+		switch (type)
+		{
+			case EVarType::Int: result += "int "; break;
+			case EVarType::Float: result += "float "; break;
+			case EVarType::ValueStruct: result += "struct "; break;
+			case EVarType::Void: result += "void "; break;
+			case EVarType::Reference: result += "reference "; break;
+		}
+
 		result += name;
 		if (type == EVarType::Reference)
 		{
@@ -175,13 +194,24 @@ struct TypeData
 		}
 		return result;
 	}
+
+	bool Validate() const
+	{
+		if ((!name.empty()) != (type == EVarType::ValueStruct || type == EVarType::Reference)) return false;
+		if (mutable_specifiers.Get(EMutableSpecifier::Mutable) && (type == EVarType::Void)) return false;
+		if (mutable_specifiers.Get(EMutableSpecifier::MutableRef) && (type != EVarType::Reference)) return false;
+		return true;
+	}
 };
 
+// Can represent: local variable, function parameter, member variable
 struct VariableData
 {
 	TypeData type_data;
 	std::string name;
 	EAccessSpecifier access_specifier = EAccessSpecifier::Default;
+
+	llvm::Value* value = nullptr;
 
 	std::string ToString() const
 	{
@@ -199,4 +229,15 @@ struct VariableData
 		result += name;
 		return result;
 	}
+};
+
+struct FunctionData
+{
+	std::string name;
+	EAccessSpecifier acces_specifier = EAccessSpecifier::Default;
+	TypeData return_type;
+	std::vector<VariableData> parameters;
+	EFunctionMutable is_mutable = EFunctionMutable::Const;
+
+	llvm::Function* function = nullptr;
 };

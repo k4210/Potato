@@ -26,5 +26,6 @@ class MyTest
 
 function void Main()
 {
-	return;
+	int my_int = IsSomeConditionTrue() ? 3 : OtherFunc();
+	CallFuncWIthIntParam((my_int == 4) ? "asd" : "wer");
 }
