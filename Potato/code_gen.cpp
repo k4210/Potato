@@ -4,25 +4,42 @@
 #include "ast_structure.h"
 #include "context.h"
 
-bool CodeGen(ModuleAST* module_root, const std::string& file_name)
+bool CodeGen(ModuleAST* module_root, const std::vector<std::shared_ptr<ModuleData>>& already_compiled_modules, const std::string& file_name)
 {
-	if (!Utils::SoftAssert(module_root, "No module root")) return false;
+	if (!Utils::SoftAssert(module_root && module_root->module_data_, "No module root"))
+	{
+		return false;
+	}
 
-	Context context;
-	context.module_ = llvm::make_unique<llvm::Module>(module_root->name, context.the_context_);
-	if (!Utils::SoftAssert(context.module_.get(), "No module created")) return false;
-	context.module_->setSourceFileName(file_name);
-
+	Context context(already_compiled_modules);
 	module_root->codegen(context);
 
-	context.module_->print(llvm::errs(), nullptr);
+	//TODO: detect Errors
+
+	module_root->module_data_->module_implementation->setSourceFileName(file_name);
+	module_root->module_data_->module_implementation->print(llvm::errs(), nullptr);
 
 	return true;
 }
 
-Context::Context()
+Context::Context(const std::vector<std::shared_ptr<ModuleData>>& already_compiled_modules)
 	: builder_(the_context_)
+	, already_compiled_modules_(already_compiled_modules)
 {}
+
+void Context::Error(const NodeAST*, const char* msg0, const char* msg1, const char* msg2)
+{
+	Utils::LogError(msg0, msg1, msg2);
+}
+
+bool Context::Ensure(bool condition, const NodeAST* node_ast, const char* msg0, const char* msg1, const char* msg2)
+{
+	if (!condition)
+	{
+		Error(node_ast, msg0, msg1, msg2);
+	}
+	return condition;
+}
 
 VariableData Context::FindVariable(const std::string& name) const
 {
@@ -54,7 +71,7 @@ bool Context::RegisterVariableOnCurrentScope(const VariableData& variable)
 
 llvm::AllocaInst* Context::CreateLocalVariable(const VariableData& variable)
 {
-	assert(function_);
+	assert(current_function_ && current_function_->function);
 	llvm::Type* type_impl = GetType(variable.type_data);
 	
 	if (!type_impl)
@@ -63,7 +80,7 @@ llvm::AllocaInst* Context::CreateLocalVariable(const VariableData& variable)
 		return nullptr;
 	}
 	// why EntryBlock?
-	llvm::IRBuilder<> local_builder(&function_->getEntryBlock(), function_->getEntryBlock().begin());
+	llvm::IRBuilder<> local_builder(&current_function_->function->getEntryBlock(), current_function_->function->getEntryBlock().begin());
 	llvm::AllocaInst* alloca_inst = local_builder.CreateAlloca(type_impl, nullptr, variable.name);
 	if (!alloca_inst)
 	{
@@ -107,9 +124,9 @@ llvm::Type* Context::GetType(const TypeData& type_data)
 	return nullptr;
 }
 
-llvm::Function* Context::FindFunction(const std::string&, const llvm::Value* optional_owner) const
+std::shared_ptr<FunctionData> Context::FindFunction(const std::string&, const llvm::Value*) const
 {
-	Utils::SoftAssert(!optional_owner, "Function context not supported yet");
+	
 
 	// we don't support this.. yet
 

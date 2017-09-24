@@ -160,7 +160,6 @@ enum class EVarType
 	ValueStruct	= 1 << 2,
 	Reference	= 1 << 3,
 };
-inline Flag32<EVarType> operator|(EVarType a, EVarType b) { return Flag32<EVarType>(a, b); }
 
 struct TypeData
 {
@@ -231,13 +230,46 @@ struct VariableData
 	}
 };
 
-struct FunctionData
+struct HighLevelEntity
 {
 	std::string name;
-	EAccessSpecifier acces_specifier = EAccessSpecifier::Default;
-	TypeData return_type;
+	std::weak_ptr<HighLevelEntity> owner;
+
+};
+
+struct StructData : public HighLevelEntity
+{
+	std::vector<VariableData> member_fields;
+	llvm::Value* value = nullptr;
+};
+
+struct FunctionData : public HighLevelEntity
+{
 	std::vector<VariableData> parameters;
-	EFunctionMutable is_mutable = EFunctionMutable::Const;
 
 	llvm::Function* function = nullptr;
+
+	TypeData return_type;
+
+	EAccessSpecifier acces_specifier = EAccessSpecifier::Default;
+	EFunctionMutable is_mutable = EFunctionMutable::Const;
+};
+
+struct ClassData : public StructData
+{
+	std::string base_class;
+	std::vector<std::string> implemented_interfaces;
+
+	std::vector<std::shared_ptr<FunctionData>> functions;
+};
+
+struct ModuleData : HighLevelEntity
+{
+	std::vector<std::shared_ptr<StructData>> structures;
+	std::vector<std::shared_ptr<ClassData>> classes;
+	std::vector<std::shared_ptr<FunctionData>> functions;
+
+	std::vector<std::weak_ptr<ModuleData>> imported_modules; // ???
+
+	std::unique_ptr<llvm::Module> module_implementation;
 };

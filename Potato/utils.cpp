@@ -1,8 +1,9 @@
 #include "stdafx.h"
-#include "utils.h"
 
 #include <windows.h>
 #include <cstdio>
+
+#include "utils.h"
 
 void Utils::Log(const char* str_0, const char* str_1, const char* str_2)
 {

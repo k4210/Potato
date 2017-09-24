@@ -182,8 +182,8 @@ VariableData Parser::ParseMemberField()
 
 std::unique_ptr<StructureAST> Parser::ParseStruct()
 {
-	std::unique_ptr<StructureAST> structure = std::make_unique<StructureAST>();
-	Expected(EToken::Identifier, structure->name, "Expected struct name");
+	auto struct_data = std::make_shared<StructData>();
+	Expected(EToken::Identifier, struct_data->name, "Expected struct name");
 	Expected(EToken::OpenCurlyBracket, "Expected open scope");
 	while(ShouldContinue())
 	{
@@ -192,17 +192,18 @@ std::unique_ptr<StructureAST> Parser::ParseStruct()
 			Optional(EToken::Semicolon);
 			break;
 		}
-		structure->member_fields_.push_back(ParseMemberField());
+		struct_data->member_fields.push_back(ParseMemberField());
 	}
-	return structure;
+
+	return std::make_unique<StructureAST>(struct_data);
 }
 
 std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 {
-	FunctionData function;
-	function.acces_specifier = ParseOptionalAccessSpecifier();
-	function.return_type = ParseType(true);
-	Expected(EToken::Identifier, function.name, "Expected name");
+	auto function_data = std::make_shared<FunctionData>();
+	function_data->acces_specifier = ParseOptionalAccessSpecifier();
+	function_data->return_type = ParseType(true);
+	Expected(EToken::Identifier, function_data->name, "Expected name");
 	Expected(EToken::OpenRoundBracket, "Expected (");
 	if (!Optional(EToken::CloseRoundBracket))
 	{
@@ -211,7 +212,7 @@ std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 			VariableData parameter;
 			parameter.type_data = ParseType();
 			Expected(EToken::Identifier, parameter.name, "Expected parameter name");
-			function.parameters.push_back(parameter);
+			function_data->parameters.push_back(parameter);
 			if (Optional(EToken::CloseRoundBracket))
 			{
 				break;
@@ -219,10 +220,9 @@ std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 			Expected(EToken::Coma, "Expecter ')' or ','");
 		}
 	}
-	function.is_mutable = Optional(EToken::Mutable) ? EFunctionMutable::Mutable : EFunctionMutable::Const;
+	function_data->is_mutable = Optional(EToken::Mutable) ? EFunctionMutable::Mutable : EFunctionMutable::Const;
 
-	std::unique_ptr<FunctionDeclarationAST> function_ast = std::make_unique<FunctionDeclarationAST>();
-	function_ast->function_data_ = function;
+	std::unique_ptr<FunctionDeclarationAST> function_ast = std::make_unique<FunctionDeclarationAST>(function_data);
 	if (!Optional(EToken::Semicolon))
 	{
 		Expected(EToken::OpenCurlyBracket, "Expected {");
@@ -233,13 +233,15 @@ std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()
 
 std::unique_ptr<ClassAST> Parser::ParseClass()
 {
-	std::unique_ptr<ClassAST> class_ast = std::make_unique<ClassAST>();
-	Expected(EToken::Identifier, class_ast->name, "Expected struct name");
+	auto class_data = std::make_shared<ClassData>();
+	Expected(EToken::Identifier, class_data->name, "Expected struct name");
 	if (Optional(EToken::Colon))
 	{
-		Expected(EToken::Identifier, class_ast->base_class_, "Expected base struct name");
+		Expected(EToken::Identifier, class_data->base_class, "Expected base struct name");
 	}
 	Expected(EToken::OpenCurlyBracket, "Expected open scope");
+
+	std::unique_ptr<ClassAST> class_ast = std::make_unique<ClassAST>(class_data);
 	while (ShouldContinue())
 	{
 		if (Optional(EToken::CloseCurlyBracket))
@@ -249,51 +251,54 @@ std::unique_ptr<ClassAST> Parser::ParseClass()
 		}
 		if (Optional(EToken::Function))
 		{
-			class_ast->functions.push_back(ParseFunction());
+			class_ast->functions_.push_back(ParseFunction());
 		}
 		else
 		{
-			class_ast->member_fields_.push_back(ParseMemberField());
+			class_data->member_fields.push_back(ParseMemberField());
 		}
 	}
+	class_ast->BindParsedChildren();
 	return class_ast;
 }
 
 std::unique_ptr<ModuleAST> Parser::ParseModule()
 {
-	std::unique_ptr<ModuleAST> module = std::make_unique<ModuleAST>();
+	auto module_data = std::make_shared<ModuleData>();
 	if (Optional(EToken::Module))
 	{
-		Expected(EToken::Identifier, module->name, "Expected module name");
+		Expected(EToken::Identifier, module_data->name, "Expected module name");
 		Expected(EToken::Semicolon, "Expected ';'");
 	}
+
+	std::unique_ptr<ModuleAST> module = std::make_unique<ModuleAST>(module_data);
 	while (ShouldContinue())
 	{
 		std::string identifier;
 		if (Optional(EToken::Import))
 		{
 			Expected(EToken::Identifier, identifier, "Expected module name");
-			module->items_.push_back(std::make_unique<ImportAST>(identifier));
+			module->imports_.push_back(std::make_unique<ImportAST>(identifier));
 			Expected(EToken::Semicolon, "Expected ';'");
 		}
 		else if (Optional(EToken::Struct))
 		{
-			module->items_.push_back(ParseStruct());
+			module->structures_.push_back(ParseStruct());
 		}
 		else if (Optional(EToken::Function))
 		{
-			module->items_.push_back(ParseFunction());
+			module->functions_.push_back(ParseFunction());
 		}
 		else if (Optional(EToken::Class))
 		{
-			module->items_.push_back(ParseClass());
+			module->classes_.push_back(ParseClass());
 		}
 		else
 		{
 			LogError("Parser::ParseModule", "Unexpected token");
 		}
 	}
-
+	module->BindParsedChildren();
 	if(!error_ ) return module;
 	return nullptr;
 }

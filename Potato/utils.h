@@ -6,6 +6,12 @@ namespace Utils
 	void Log(const char* str_0, const char* str_1 = "", const char* str_2 = "");
 	void LogError(const char* str_0, const char* str_1 = "", const char* str_2 = "");
 	bool SoftAssert(bool condition, const char* error_msg = "");
+
+	template<typename C, typename T>
+	bool Contains(const C& container, const T& val)
+	{
+		return container.end() != std::find(container.begin(), container.end(), val);
+	}
 };
 
 struct Logger
@@ -21,6 +27,7 @@ public:
 template<typename E>
 struct Flag32
 {
+	static_assert(std::is_enum<E>::value, "An Enum type is required");
 private:
 	unsigned int data = 0;
 public:
@@ -68,3 +75,6 @@ public:
 		Add(tail...);
 	}
 };
+
+template<typename E>
+inline Flag32<E> operator|(E a, E b) { return Flag32<E>(a, b); }

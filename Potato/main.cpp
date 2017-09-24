@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "ast_structure.h"
 
-bool CodeGen(ModuleAST* module_root, const std::string& file_name);
+bool CodeGen(ModuleAST* module_root, const std::vector<std::shared_ptr<ModuleData>>& known_modules, const std::string& file_name);
 
 void InitializeLexer(Lexer& lexer)
 {
@@ -37,25 +37,35 @@ int main(int argc, char *argv[])
 
 	Utils::Log("Potato is ready! File:", argv[1]);
 
-	std::unique_ptr<ModuleAST> module_ast;
+	std::vector<std::shared_ptr<ModuleData>> compiled_modules;
 	{
-		Lexer lexer;
-		InitializeLexer(lexer);
-		lexer.Start(argv[1]);
-		Parser parser(lexer);
-		module_ast = parser.ParseModule();
-		lexer.End();
-	}
+		std::unique_ptr<ModuleAST> module_ast;
 
-	if (module_ast)
-	{
+		{
+			Lexer lexer;
+			InitializeLexer(lexer);
+			lexer.Start(argv[1]);
+			Parser parser(lexer);
+			module_ast = parser.ParseModule();
+		}
+
+		if (module_ast)
 		{
 			Logger logger;
 			module_ast->log(logger, "root");
 		}
-		Utils::LogSuccess("PARSED SUCCESSFULLY!");
-		Utils::Log("Codegen:");
-		CodeGen(module_ast.get(), argv[1]);
+
+		if (module_ast)
+		{
+			Utils::LogSuccess("PARSED SUCCESSFULLY!");
+			Utils::Log("Codegen:");
+			const bool compiled_successfully = CodeGen(module_ast.get(), compiled_modules, argv[1]);
+			if (compiled_successfully && module_ast->module_data_)
+			{
+				compiled_modules.emplace_back(module_ast->module_data_);
+				Utils::LogSuccess("MODULE", module_ast->module_data_->name.c_str(), "WAS COMPILED SUCCESSFULLY!");
+			}
+		}
 	}
 
 	WaitForUserToExit();
