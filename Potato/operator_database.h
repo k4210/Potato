@@ -92,7 +92,7 @@ public:
 		int precedence = -1; // 1 is lowest precedence.
 		EBinaryOperator op = EBinaryOperator::_Error;
 		Flag32<EVarType> supported_data_types;
-		CodegenFunction codegen = nullptr;
+		CodegenFunction Codegen = nullptr;
 
 		OperatorData()
 		{}
@@ -104,7 +104,7 @@ public:
 			, precedence(in_precedence)
 			, op(in_op)
 			, supported_data_types(in_types)
-			, codegen(in_codegen)
+			, Codegen(in_codegen)
 		{}
 	};
 

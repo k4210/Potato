@@ -7,8 +7,6 @@
 
 class HighLevelAST : public NodeAST
 {
-public:
-	virtual void codegen(Context& context) const = 0;
 };
 
 class FunctionDeclarationAST : public HighLevelAST
@@ -40,7 +38,8 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void RegisterFunction(Context& context) const;
+	void Codegen(Context& context) const;
 };
 
 class StructureAST : public HighLevelAST
@@ -68,7 +67,10 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void RegisterType(Context& context) const;
+	void GenerateDataLayout(Context& context) const;
+	void RegisterFunctions(Context& context) const;
+	void Codegen(Context& context) const;
 };
 
 class ClassAST : public HighLevelAST
@@ -103,7 +105,10 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void RegisterType(Context& context) const;
+	void GenerateDataLayout(Context& context) const;
+	void RegisterFunctions(Context& context) const;
+	void Codegen(Context& context) const;
 	void BindParsedChildren()
 	{
 		for (auto& func_ast : functions_)
@@ -131,7 +136,7 @@ public:
 		result += name;
 		logger.PrintLine(contect_str, result.c_str());
 	}
-	void codegen(Context& context) const override;
+	void Import(Context& context) const;
 };
 
 class ModuleAST : public HighLevelAST
@@ -173,7 +178,7 @@ public:
 			item->log(logger, "module scope function");
 		}
 	}
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const;
 	void BindParsedChildren()
 	{
 		for (auto& func_ast : functions_)

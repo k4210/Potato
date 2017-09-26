@@ -52,10 +52,10 @@ BinaryOperatorDatabase::BinaryOperatorDatabase()
 		, int in_precedence
 		, EBinaryOperator in_op
 		, Flag32<EVarType> types
-		, CodegenFunction codegen)
+		, CodegenFunction Codegen)
 	{
 		const OperatorId id(in_name);
-		operators_map_.emplace(in_op, OperatorData(id, in_precedence, in_op, types, codegen));
+		operators_map_.emplace(in_op, OperatorData(id, in_precedence, in_op, types, Codegen));
 		id_to_op_.emplace(id, in_op);
 		op_sorted_by_precedence_descending_.push_back(in_op);
 	};

@@ -7,7 +7,7 @@
 class ControlFlowAST : public NodeAST
 {
 public:
-	virtual void codegen(Context& context) const = 0;
+	virtual void Codegen(Context& context) const = 0;
 };
 
 class CodeScopeAST : public ControlFlowAST
@@ -24,7 +24,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const override;
 };
 
 class IfAST : public ControlFlowAST
@@ -51,7 +51,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const override;
 };
 
 class ForExprAST : public ControlFlowAST 
@@ -81,13 +81,13 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const override;
 };
 
 class BreakAST : public ControlFlowAST
 {
 public:
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const override;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "BreakAST");
@@ -97,7 +97,7 @@ public:
 class ContinueAST : public ControlFlowAST
 {
 public:
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const override;
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		logger.PrintLine(contect_str, "ContinueAST");
@@ -118,5 +118,5 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void codegen(Context& context) const override;
+	void Codegen(Context& context) const override;
 };

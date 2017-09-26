@@ -12,6 +12,12 @@ namespace Utils
 	{
 		return container.end() != std::find(container.begin(), container.end(), val);
 	}
+
+	template<typename C, class P>
+	bool ContainsIf(const C& container, P predicate)
+	{
+		return container.end() != std::find_if(container.begin(), container.end(), predicate);
+	}
 };
 
 struct Logger

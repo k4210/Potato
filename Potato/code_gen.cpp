@@ -12,13 +12,15 @@ bool CodeGen(ModuleAST* module_root, const std::vector<std::shared_ptr<ModuleDat
 	}
 
 	Context context(already_compiled_modules);
-	module_root->codegen(context);
+	module_root->Codegen(context);
 
-	//TODO: detect Errors
+	if (!module_root->module_data_->module_implementation)
+	{
+		return false;
+	}
 
 	module_root->module_data_->module_implementation->setSourceFileName(file_name);
 	module_root->module_data_->module_implementation->print(llvm::errs(), nullptr);
-
 	return true;
 }
 

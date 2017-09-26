@@ -7,7 +7,7 @@
 class ExprAST : public NodeAST
 {
 public:
-	virtual llvm::Value* codegen(Context& context) const = 0;
+	virtual llvm::Value* Codegen(Context& context) const = 0;
 };
 
 class LiteralFloatAST : public ExprAST
@@ -22,7 +22,7 @@ public:
 	{
 		logger.PrintLine(contect_str, "LiteralFloatAST:", std::to_string(value_).c_str());
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class LiteralIntegerAST : public ExprAST
@@ -37,7 +37,7 @@ public:
 	{
 		logger.PrintLine(contect_str, "LiteralIntegerAST:", std::to_string(value_).c_str());
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class LiteralStringAST : public ExprAST
@@ -52,7 +52,7 @@ public:
 	{
 		logger.PrintLine(contect_str, "LiteralStringAST:", value_.c_str());
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class LocalVariableDeclarationAST : public ExprAST
@@ -67,7 +67,7 @@ public:
 	{
 		logger.PrintLine(contect_str, "LocalVariableDeclarationAST:", variable_.ToString().c_str());
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class VariableExprAST : public ExprAST 
@@ -85,7 +85,7 @@ public:
 			logger.DecreaseIndent();
 		}
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class UnaryOpAST : public ExprAST 
@@ -120,7 +120,7 @@ public:
 			logger.DecreaseIndent();
 		}
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class BinaryOpAST : public ExprAST 
@@ -153,7 +153,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class CallExprAST : public ExprAST 
@@ -176,7 +176,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 
 class TernaryOpAst : public ExprAST
@@ -206,6 +206,6 @@ public:
 	{
 		return condition_ && if_true_ && if_false_;
 	}
-	llvm::Value* codegen(Context& context) const override;
+	llvm::Value* Codegen(Context& context) const override;
 };
 

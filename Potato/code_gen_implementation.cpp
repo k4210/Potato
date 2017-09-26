@@ -7,28 +7,28 @@
 #include "operator_database.h"
 #include "context.h"
 
-llvm::Value* LiteralFloatAST::codegen(Context& context)const 
+llvm::Value* LiteralFloatAST::Codegen(Context& context)const 
 {
 	return llvm::ConstantFP::get(context.the_context_, llvm::APFloat(value_));
 }
 
-llvm::Value* LiteralIntegerAST::codegen(Context& context)const
+llvm::Value* LiteralIntegerAST::Codegen(Context& context)const
 {
 	return llvm::ConstantInt::get(context.the_context_, llvm::APInt(sizeof(value_) * 8, value_, true));
 }
 
-llvm::Value* LiteralStringAST::codegen(Context& ) const
+llvm::Value* LiteralStringAST::Codegen(Context& ) const
 {
 	Utils::SoftAssert(false, "LiteralStringAST::codegen not implemented");
 	return nullptr;
 }
 
-llvm::Value* LocalVariableDeclarationAST::codegen(Context& context) const 
+llvm::Value* LocalVariableDeclarationAST::Codegen(Context& context) const 
 {
 	return context.CreateLocalVariable(variable_);
 }
 
-llvm::Value* VariableExprAST::codegen(Context& context)const 
+llvm::Value* VariableExprAST::Codegen(Context& context)const 
 {
 	Utils::SoftAssert(!context_, "Variable context not supported yet");
 
@@ -39,9 +39,9 @@ llvm::Value* VariableExprAST::codegen(Context& context)const
 		: nullptr;
 }
 
-llvm::Value* UnaryOpAST::codegen(Context& context) const
+llvm::Value* UnaryOpAST::Codegen(Context& context) const
 { 
-	llvm::Value* const value = terminal_ ? terminal_->codegen(context) : nullptr;
+	llvm::Value* const value = terminal_ ? terminal_->Codegen(context) : nullptr;
 	if (!value)
 	{
 		Utils::LogError("UnaryOpAST::codegen improper value");
@@ -77,18 +77,18 @@ llvm::Value* UnaryOpAST::codegen(Context& context) const
 	return nullptr; 
 }
 
-llvm::Value* BinaryOpAST::codegen(Context& context) const
+llvm::Value* BinaryOpAST::Codegen(Context& context) const
 { 
 	const auto operator_data = BinaryOperatorDatabase::Get().GetOperatorData(opcode_);
 
-	llvm::Value* const right_value = rhs_ ? rhs_->codegen(context) : nullptr;
-	llvm::Value* const left_value  = lhs_ ? lhs_->codegen(context) : nullptr;
+	llvm::Value* const right_value = rhs_ ? rhs_->Codegen(context) : nullptr;
+	llvm::Value* const left_value  = lhs_ ? lhs_->Codegen(context) : nullptr;
 	if (!right_value || !left_value || (operator_data.op != opcode_) || (opcode_ == EBinaryOperator::_Error))
 	{
 		context.Error(this, "BinaryOpAST::codegen error");
 		return nullptr;
 	}
-	Utils::SoftAssert(operator_data.codegen, "Operator not implemented");
+	Utils::SoftAssert(operator_data.Codegen, "Operator not implemented");
 
 	const EVarType right_var_type = context.GetPotatoDataType(right_value->getType());
 	const EVarType left_var_type = context.GetPotatoDataType(left_value->getType());
@@ -100,7 +100,7 @@ llvm::Value* BinaryOpAST::codegen(Context& context) const
 		return nullptr;
 	}
 
-	llvm::Value* const result = operator_data.codegen(context, left_value, right_value);
+	llvm::Value* const result = operator_data.Codegen(context, left_value, right_value);
 	if (!result)
 	{
 		context.Error(this, "BinaryOpAST::codegen !result");
@@ -109,9 +109,9 @@ llvm::Value* BinaryOpAST::codegen(Context& context) const
 	return result;
 }
 
-llvm::Value* CallExprAST::codegen(Context& context) const
+llvm::Value* CallExprAST::Codegen(Context& context) const
 { 
-	llvm::Value* const specified_function_owner = context_ ? context_->codegen(context) : nullptr;
+	llvm::Value* const specified_function_owner = context_ ? context_->Codegen(context) : nullptr;
 	const auto called_function = context.FindFunction(function_name_, specified_function_owner);
 	if (!called_function || !called_function->function)
 	{
@@ -123,7 +123,7 @@ llvm::Value* CallExprAST::codegen(Context& context) const
 	std::vector<llvm::Value *> arguments;
 	for (const auto& arg_expr : args_)
 	{
-		llvm::Value* value = arg_expr->codegen(context);
+		llvm::Value* value = arg_expr->Codegen(context);
 		arguments.emplace_back(value);
 	}
 
@@ -134,9 +134,9 @@ llvm::Value* CallExprAST::codegen(Context& context) const
 	return context.builder_.CreateCall(called_function->function, arguments, "calltmp");
 }
 
-llvm::Value* TernaryOpAst::codegen(Context&) const { return nullptr; }
+llvm::Value* TernaryOpAst::Codegen(Context&) const { return nullptr; }
 
-void CodeScopeAST::codegen(Context& context)const 
+void CodeScopeAST::Codegen(Context& context)const 
 {
 	context.OpenScope(nullptr);
 	for (const auto& child : code_)
@@ -144,11 +144,11 @@ void CodeScopeAST::codegen(Context& context)const
 		NodeAST* ast_node = child.get();
 		if (auto control_flow = dynamic_cast<ControlFlowAST*>(ast_node))
 		{
-			control_flow->codegen(context);
+			control_flow->Codegen(context);
 		}
 		else if (auto expression = dynamic_cast<ExprAST*>(ast_node))
 		{
-			expression->codegen(context);
+			expression->Codegen(context);
 		}
 		else
 		{
@@ -156,68 +156,107 @@ void CodeScopeAST::codegen(Context& context)const
 		}
 	}
 }
-void IfAST::codegen(Context& )const {}
-void ForExprAST::codegen(Context& )const {}
-void BreakAST::codegen(Context& )const {}
-void ContinueAST::codegen(Context& )const {}
-void ReturnAST::codegen(Context& )const {}
+void IfAST::Codegen(Context& )const {}
+void ForExprAST::Codegen(Context& )const {}
+void BreakAST::Codegen(Context& )const {}
+void ContinueAST::Codegen(Context& )const {}
+void ReturnAST::Codegen(Context& )const {}
 
-void FunctionDeclarationAST::codegen(Context& )const 
+void FunctionDeclarationAST::Codegen(Context& )const 
 {
 	
 }
 
-void StructureAST::codegen(Context& )const 
+void FunctionDeclarationAST::RegisterFunction(Context&)const
 {
 
 }
 
-void ClassAST::codegen(Context& )const 
+void StructureAST::RegisterType(Context&) const
 {
 
 }
 
-void ModuleAST::codegen(Context& context) const
+void ClassAST::RegisterType(Context&) const
+{
+
+}
+
+void StructureAST::GenerateDataLayout(Context&) const
+{
+
+}
+
+void ClassAST::GenerateDataLayout(Context&) const
+{
+
+}
+
+void StructureAST::Codegen(Context&)const
+{
+
+}
+
+void ClassAST::RegisterFunctions(Context&)const
+{
+
+}
+
+void StructureAST::RegisterFunctions(Context& )const
+{
+
+}
+
+void ClassAST::Codegen(Context& )const 
+{
+
+}
+
+void ModuleAST::Codegen(Context& context) const
 {
 	if (!context.Ensure( module_data_.get(), this, "no module")) return;
 	if (!context.Ensure( !module_data_->module_implementation, this, "module already compiled")) return;
 	if (!context.Ensure( !context.current_module_.get(), this, "unexpected")) return;
 	if (!context.Ensure( !Utils::Contains(context.already_compiled_modules_, module_data_), this, "module already compiled 2")) return;
-	for (const auto& module : context.already_compiled_modules_)
-	{
-		if(!context.Ensure(module->name != module_data_->name, this, "module name is not unique")) return;
-	}
+	const bool name_not_unique = Utils::ContainsIf(context.already_compiled_modules_, [&](auto module) {return module->name != module_data_->name; });
+	if (!context.Ensure( !name_not_unique, this, "module name is not unique")) return;
 
 	module_data_->module_implementation = llvm::make_unique<llvm::Module>(module_data_->name, context.the_context_);
 	if (!context.Ensure(module_data_->module_implementation != nullptr, this, "module implementation not created")) return;
 	
 	context.current_module_ = module_data_;
-	for (auto& item : imports_)
-	{
-		item->codegen(context);
-	}
-	for (auto& item : structures_)
-	{
-		item->codegen(context);
-	}
-	for (auto& item : classes_)
-	{
-		item->codegen(context);// Split?
-	}
-	for (auto& item : functions_)
-	{
-		item->codegen(context);
-	}
+	for (auto& item : imports_)		item->Import(context);
+	
+	//At this point all HighLevelEntity objects are filled, and only the llvm implementation is missing.
+
+	for (auto& item : structures_)	item->RegisterType(context);
+	for (auto& item : classes_)		item->RegisterType(context);
+
+	for (auto& item : structures_)	item->GenerateDataLayout(context);
+	for (auto& item : classes_)		item->GenerateDataLayout(context);
+
+	for (auto& item : structures_)	item->RegisterFunctions(context);
+	for (auto& item : classes_)		item->RegisterFunctions(context);
+	for (auto& item : functions_)	item->RegisterFunction(context);
+
+	for (auto& item : structures_)	item->Codegen(context);
+	for (auto& item : classes_)		item->Codegen(context);
+	for (auto& item : functions_)	item->Codegen(context);
+
 	context.current_module_ = nullptr;
 }
 
-void ImportAST::codegen(Context& context)const 
+void ImportAST::Import(Context& context) const
 {
-	for (auto& module : context.already_compiled_modules_)
+	for (auto& compiled_module : context.already_compiled_modules_)
 	{
-		if (module->name == name)
+		if (compiled_module->name == name)
 		{
-			context.current_module_->imported_modules.emplace_back(module);
+			auto module_ptr = std::weak_ptr<ModuleData>(compiled_module);
+			const bool already_included = Utils::ContainsIf(context.current_module_->imported_modules
+				, [&](auto ptr) { return compiled_module == ptr.lock(); });
+			context.Ensure(!already_included, this, "module already imported");
+			context.current_module_->imported_modules.emplace_back(compiled_module);
 		}
 	}
 }
