@@ -34,15 +34,6 @@ void Context::Error(const NodeAST*, const char* msg0, const char* msg1, const ch
 	Utils::LogError(msg0, msg1, msg2);
 }
 
-bool Context::Ensure(bool condition, const NodeAST* node_ast, const char* msg0, const char* msg1, const char* msg2)
-{
-	if (!condition)
-	{
-		Error(node_ast, msg0, msg1, msg2);
-	}
-	return condition;
-}
-
 VariableData Context::FindVariable(const std::string& name) const
 {
 	for (auto riter = scope_stack_.rbegin(); riter != scope_stack_.rend(); riter++)

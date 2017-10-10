@@ -123,6 +123,8 @@ namespace llvm
 {
 	class Value;
 	class Function;
+	class Type;
+	class StructType;
 }
 
 class NodeAST
@@ -210,7 +212,7 @@ struct VariableData
 	std::string name;
 	EAccessSpecifier access_specifier = EAccessSpecifier::Default;
 
-	llvm::Value* value = nullptr;
+	llvm::Value* value = nullptr; //Only for non-member local variable?
 
 	std::string ToString() const
 	{
@@ -239,8 +241,8 @@ struct HighLevelEntity
 
 struct StructData : public HighLevelEntity
 {
-	std::vector<VariableData> member_fields;
-	llvm::Value* value = nullptr;
+	std::map<std::string, VariableData> member_fields;
+	llvm::StructType* type = nullptr;
 };
 
 struct FunctionData : public HighLevelEntity
@@ -260,14 +262,14 @@ struct ClassData : public StructData
 	std::string base_class;
 	std::vector<std::string> implemented_interfaces;
 
-	std::vector<std::shared_ptr<FunctionData>> functions;
+	std::map<std::string, std::shared_ptr<FunctionData>> functions;
 };
 
 struct ModuleData : HighLevelEntity
 {
-	std::vector<std::shared_ptr<StructData>> structures;
-	std::vector<std::shared_ptr<ClassData>> classes;
-	std::vector<std::shared_ptr<FunctionData>> functions;
+	std::map<std::string, std::shared_ptr<StructData>> structures;
+	std::map<std::string, std::shared_ptr<ClassData>> classes;
+	std::map<std::string, std::shared_ptr<FunctionData>> functions;
 
 	std::vector<std::weak_ptr<ModuleData>> imported_modules; // ???
 

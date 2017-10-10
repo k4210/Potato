@@ -9,6 +9,7 @@
 
 void Parser::LogError(const char* msg1, const char* msg2)
 {
+	msg1 = msg1 ? msg1 : "Parser Error";
 	error_ = true;
 	Utils::LogError(lexer_.GetCodeLocation().c_str(), msg1, msg2);
 }
@@ -30,10 +31,6 @@ bool Parser::Expected(EToken expected_token, const char* error_msg)
 		{
 			return true;
 		}
-		if (nullptr == error_msg)
-		{
-			// alloca generic msg
-		}
 		LogError(error_msg);
 	}
 	return false;
@@ -46,10 +43,6 @@ bool Parser::Expected(EToken expected_token, std::string& out_str, const char* e
 		if (lexer_.Consume(expected_token, out_str))
 		{
 			return true;
-		}
-		if (nullptr == error_msg)
-		{
-			// alloca generic msg
 		}
 		LogError(error_msg);
 	}
@@ -192,7 +185,8 @@ std::unique_ptr<StructureAST> Parser::ParseStruct()
 			Optional(EToken::Semicolon);
 			break;
 		}
-		struct_data->member_fields.push_back(ParseMemberField());
+		auto member_field = ParseMemberField();
+		struct_data->member_fields.emplace(member_field.name, member_field);
 	}
 
 	return std::make_unique<StructureAST>(struct_data);
@@ -255,7 +249,8 @@ std::unique_ptr<ClassAST> Parser::ParseClass()
 		}
 		else
 		{
-			class_data->member_fields.push_back(ParseMemberField());
+			auto member_field = ParseMemberField();
+			class_data->member_fields.emplace(member_field.name, member_field);
 		}
 	}
 	class_ast->BindParsedChildren();

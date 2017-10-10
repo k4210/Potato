@@ -26,7 +26,14 @@ public:
 
 	//Register error is condition is false. Return the condition.
 	void Error(const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "");
-	bool Ensure(bool condition, const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "");
+	inline bool Ensure(bool condition, const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "")
+	{
+		if (!condition)
+		{
+			Error(node_ast, msg0, msg1, msg2);
+		}
+		return condition;
+	}
 
 	llvm::Type* GetType(const TypeData& type_data);
 	EVarType Context::GetPotatoDataType(const llvm::Type* type_data);

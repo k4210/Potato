@@ -63,7 +63,7 @@ public:
 		logger.IncreaseIndent();
 		for (auto& var : structure_data_->member_fields)
 		{
-			logger.PrintLine("member_field", var.ToString().c_str());
+			logger.PrintLine("member_field", var.first.c_str());
 		}
 		logger.DecreaseIndent();
 	}
@@ -96,7 +96,7 @@ public:
 		logger.IncreaseIndent();
 		for (auto& var : class_data_->member_fields)
 		{
-			logger.PrintLine("member_field", var.ToString().c_str());
+			logger.PrintLine("member_field", var.first.c_str());
 		}
 
 		for (auto& func : functions_)
@@ -116,7 +116,7 @@ public:
 			if (func_ast && func_ast->function_data_)
 			{
 				func_ast->function_data_->owner = class_data_;
-				class_data_->functions.emplace_back(func_ast->function_data_);
+				class_data_->functions.emplace(func_ast->function_data_->name, func_ast->function_data_);
 			}
 		}
 	}
@@ -186,7 +186,7 @@ public:
 			if (func_ast && func_ast->function_data_)
 			{
 				func_ast->function_data_->owner = module_data_;
-				module_data_->functions.emplace_back(func_ast->function_data_);
+				module_data_->functions.emplace(func_ast->function_data_->name, func_ast->function_data_);
 			}
 		}
 
@@ -195,7 +195,7 @@ public:
 			if (ast && ast->structure_data_)
 			{
 				ast->structure_data_->owner = module_data_;
-				module_data_->structures.emplace_back(ast->structure_data_);
+				module_data_->structures.emplace(ast->structure_data_->name, ast->structure_data_);
 			}
 		}
 
@@ -204,7 +204,7 @@ public:
 			if (ast && ast->class_data_)
 			{
 				ast->class_data_->owner = module_data_;
-				module_data_->classes.emplace_back(ast->class_data_);
+				module_data_->classes.emplace(ast->class_data_->name, ast->class_data_);
 			}
 		}
 	}

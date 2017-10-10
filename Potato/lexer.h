@@ -35,6 +35,8 @@ class Lexer
 	std::set<std::string> two_signs_operators_;
 
 	std::ifstream input_stream_;
+
+	// THe data are needed to "get code location as string"
 	int current_line_ = 0;
 	int sign_in_line_ = 0;
 	std::string filename_;
