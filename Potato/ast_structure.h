@@ -53,10 +53,15 @@ public:
 		: structure_data_(structure_data)
 	{}
 
+	virtual const char* GetName() const 
+	{
+		return "StructureAST ";
+	}
+
 	void log(Logger& logger, const char* contect_str) const override
 	{
 		Utils::SoftAssert(structure_data_.get(), "error..");
-		std::string result = "StructureAST ";
+		std::string result( GetName() );
 		result += structure_data_->name;
 		logger.PrintLine(contect_str, result.c_str());
 
@@ -73,40 +78,44 @@ public:
 	void Codegen(Context& context) const;
 };
 
-class ClassAST : public HighLevelAST
+class ClassAST : public StructureAST
 {
 public:
-	std::shared_ptr<ClassData> class_data_;
-
 	std::vector<std::unique_ptr<FunctionDeclarationAST>> functions_;
+
+	//TODO: interfaces
 
 	ClassAST() = default;
 	ClassAST(std::shared_ptr<ClassData> class_data)
-		: class_data_(class_data)
+		: StructureAST(class_data)
 	{}
+
+	const ClassData* GetClassData() const
+	{
+		return static_cast<const ClassData*>(structure_data_.get());
+	}
+	ClassData* GetClassData()
+	{
+		return static_cast<ClassData*>(structure_data_.get());
+	}
+
+	const char* GetName() const override
+	{
+		return "ClassAST ";
+	}
 
 	void log(Logger& logger, const char* contect_str) const override
 	{
-		Utils::SoftAssert(class_data_.get(), "error..");
-		std::string result = "ClassAST ";
-		result += class_data_->name;
-		result += " : ";
-		result += class_data_->base_class;
-		logger.PrintLine(contect_str, result.c_str());
-		logger.IncreaseIndent();
-		for (auto& var : class_data_->member_fields)
-		{
-			logger.PrintLine("member_field", var.first.c_str());
-		}
+		StructureAST::log(logger, contect_str);
+		logger.PrintLine(contect_str, "Base class: ", GetClassData()->base_class.c_str());
 
+		logger.IncreaseIndent();
 		for (auto& func : functions_)
 		{
 			func->log(logger, "func");
 		}
 		logger.DecreaseIndent();
 	}
-	void RegisterType(Context& context) const;
-	void GenerateDataLayout(Context& context) const;
 	void RegisterFunctions(Context& context) const;
 	void Codegen(Context& context) const;
 	void BindParsedChildren()
@@ -115,8 +124,8 @@ public:
 		{
 			if (func_ast && func_ast->function_data_)
 			{
-				func_ast->function_data_->owner = class_data_;
-				class_data_->functions.emplace(func_ast->function_data_->name, func_ast->function_data_);
+				func_ast->function_data_->owner = structure_data_;
+				GetClassData()->functions.emplace(func_ast->function_data_->name, func_ast->function_data_);
 			}
 		}
 	}
@@ -201,10 +210,11 @@ public:
 
 		for (auto& ast : classes_)
 		{
-			if (ast && ast->class_data_)
+			if (ast && ast->structure_data_)
 			{
-				ast->class_data_->owner = module_data_;
-				module_data_->classes.emplace(ast->class_data_->name, ast->class_data_);
+				ast->structure_data_->owner = module_data_;
+				module_data_->classes.emplace(ast->structure_data_->name
+					, std::static_pointer_cast<ClassData>(ast->structure_data_));
 			}
 		}
 	}

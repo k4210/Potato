@@ -179,29 +179,17 @@ void StructureAST::RegisterType(Context& context) const
 	context.Ensure(nullptr != structure_data_->type, this);
 }
 
-void ClassAST::RegisterType(Context& context) const
-{
-	context.Ensure(nullptr == class_data_->type, this);
-	class_data_->type = llvm::StructType::create(context.the_context_, class_data_->name);
-	context.Ensure(nullptr != class_data_->type, this);
-}
-
 void StructureAST::GenerateDataLayout(Context& context) const
 {
 	std::vector<llvm::Type*> members;
 	for (auto& member_iter : structure_data_->member_fields)
 	{
-		//context.Ensure(nullptr == member_iter.second.value, this);
-		//TODO: add llvm::Type to TypeData?
+		// context.Ensure(nullptr == member_iter.second.value, this);
+		// TODO: add llvm::Type to TypeData?
 		members.push_back(context.GetType(member_iter.second.type_data));
 	}
 	
 	structure_data_->type->setBody(members);
-}
-
-void ClassAST::GenerateDataLayout(Context&) const
-{
-
 }
 
 void StructureAST::Codegen(Context&)const
