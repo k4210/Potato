@@ -203,6 +203,25 @@ struct TypeData
 		if (mutable_specifiers.Get(EMutableSpecifier::MutableRef) && (type != EVarType::Reference)) return false;
 		return true;
 	}
+
+	TypeData() = default;
+	TypeData(EVarType in_type) : type(in_type) {}
+};
+
+struct ExpressionResult
+{
+	TypeData type_data;
+	llvm::Value* value = nullptr;
+
+	operator bool() const
+	{
+		return nullptr != value;
+	}
+
+	operator llvm::Value*() const
+	{
+		return value;
+	}
 };
 
 // Can represent: local variable, function parameter, member variable
@@ -232,7 +251,7 @@ struct VariableData
 	}
 };
 
-struct HighLevelEntity
+struct HighLevelEntity : public std::enable_shared_from_this<HighLevelEntity>
 {
 	std::string name;
 	std::weak_ptr<HighLevelEntity> owner;

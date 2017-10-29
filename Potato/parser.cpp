@@ -489,10 +489,10 @@ std::unique_ptr<ExprAST> Parser::ParseExpression(const std::string* already_read
 		{
 			logger.PrintLine(contect_str, "TempSecondTernaryOpAst");
 		}
-		llvm::Value* Codegen(Context&) const override
+		ExpressionResult Codegen(Context&) const override
 		{
 			Utils::SoftAssert(false, "TempSecondTernaryOpAst cannot generate code. It should be consumed by the Parser");
-			return false;
+			return {};
 		}
 	};
 	auto AddExpressionToList = [&]()

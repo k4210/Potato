@@ -70,60 +70,81 @@ BinaryOperatorDatabase::BinaryOperatorDatabase()
 	add("%=", 5, EBinaryOperator::ModuloAssign, EVarType::Int, nullptr);
 	add("&=", 5, EBinaryOperator::AndAssign, EVarType::Int, nullptr);
 	add("|=", 5, EBinaryOperator::OrAssign, EVarType::Int, nullptr);
-
-	add("|", 10, EBinaryOperator::Or, EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	///////////////////////////////
+	add("|", 10, EBinaryOperator::Or, EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateOr(lhs, rhs);
+		return { TypeData(EVarType::Int), context.builder_.CreateOr(lhs, rhs) };
 	});
-	add("&", 15, EBinaryOperator::And, EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("&", 15, EBinaryOperator::And, EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return { TypeData(EVarType::Int), context.builder_.CreateAnd(lhs, rhs) };
 	});
-	add("==", 20, EBinaryOperator::Equal, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	///////////////////////////////
+	add("==", 20, EBinaryOperator::Equal, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		const EVarType var_type = context.GetPotatoDataType(lhs->getType());
-		return (EVarType::Int == var_type) ? context.builder_.CreateICmpEQ(lhs, rhs) : context.builder_.CreateFCmpOEQ(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateICmpEQ(lhs, rhs) 
+			: context.builder_.CreateFCmpOEQ(lhs, rhs) };
 	});
-	add("!=", 20, EBinaryOperator::NotEqual, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("!=", 20, EBinaryOperator::NotEqual, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateICmpNE(lhs, rhs)
+			: context.builder_.CreateFCmpONE(lhs, rhs) };
 	});
-	add(">=", 25, EBinaryOperator::GreaterOrEqual, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add(">=", 25, EBinaryOperator::GreaterOrEqual, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateICmpSGE(lhs, rhs)
+			: context.builder_.CreateFCmpOGE(lhs, rhs) };
 	});
-	add("<=", 25, EBinaryOperator::LessOrEqual, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("<=", 25, EBinaryOperator::LessOrEqual, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateICmpSLE(lhs, rhs)
+			: context.builder_.CreateFCmpOLE(lhs, rhs) };
 	});
-	add("<", 25, EBinaryOperator::Less, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("<", 25, EBinaryOperator::Less, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateICmpSLT(lhs, rhs)
+			: context.builder_.CreateFCmpOLT(lhs, rhs) };
 	});
-	add(">", 25, EBinaryOperator::Greater, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add(">", 25, EBinaryOperator::Greater, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateICmpSGT(lhs, rhs)
+			: context.builder_.CreateFCmpOGT(lhs, rhs) };
 	});
-	add("+", 30, EBinaryOperator::Add, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	///////////////////////////////
+	add("+", 30, EBinaryOperator::Add, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ lhs.type_data, (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateAdd(lhs, rhs)
+			: context.builder_.CreateFAdd(lhs, rhs) };
 	});
-	add("-", 30, EBinaryOperator::Sub, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("-", 30, EBinaryOperator::Sub, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ lhs.type_data, (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateSub(lhs, rhs)
+			: context.builder_.CreateFSub(lhs, rhs) };
 	});
-	add("*", 35, EBinaryOperator::Multiply, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("*", 35, EBinaryOperator::Multiply, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ lhs.type_data, (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateMul(lhs, rhs)
+			: context.builder_.CreateFMul(lhs, rhs) };;
 	});
-	add("/", 35, EBinaryOperator::Divide, EVarType::Float | EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	add("/", 35, EBinaryOperator::Divide, EVarType::Float | EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ lhs.type_data, (EVarType::Int == lhs.type_data.type)
+			? context.builder_.CreateSDiv(lhs, rhs)
+			: context.builder_.CreateFDiv(lhs, rhs) };
 	});
-
-	add("%", 35, EBinaryOperator::Modulo, EVarType::Int, [](Context& context, llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value*
+	///////////////////////////////
+	add("%", 35, EBinaryOperator::Modulo, EVarType::Int, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
 	{
-		return context.builder_.CreateAnd(lhs, rhs);
+		return ExpressionResult{ TypeData(EVarType::Int), context.builder_.CreateSRem(lhs, rhs) };
 	});
 
 	std::reverse(op_sorted_by_precedence_descending_.begin(), op_sorted_by_precedence_descending_.end());

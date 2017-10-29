@@ -84,7 +84,7 @@ class BinaryOperatorDatabase
 public:
 	static const BinaryOperatorDatabase& Get();
 
-	typedef llvm::Value*(*CodegenFunction)(Context&, llvm::Value*, llvm::Value*);
+	typedef ExpressionResult(*CodegenFunction)(Context&, ExpressionResult, ExpressionResult);
 
 	struct OperatorData
 	{

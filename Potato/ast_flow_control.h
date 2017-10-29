@@ -31,7 +31,7 @@ class IfAST : public ControlFlowAST
 {
 public:
 	std::unique_ptr<ExprAST> condition_;
-	std::unique_ptr<NodeAST> if_true_;
+	std::unique_ptr<NodeAST> if_true_; //TODO: CodeScopeAST, scope
 	std::unique_ptr<NodeAST> otherwise_;
 	void log(Logger& logger, const char* contect_str) const override
 	{

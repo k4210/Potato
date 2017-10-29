@@ -116,7 +116,6 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void RegisterFunctions(Context& context) const;
 	void Codegen(Context& context) const;
 	void BindParsedChildren()
 	{

@@ -110,14 +110,23 @@ llvm::Type* Context::GetType(const TypeData& type_data)
 	case EVarType::Float:
 		return llvm::Type::getFloatTy(the_context_);
 	case EVarType::ValueStruct:
-		// TODO:
+		{
+			auto data = FindEntity<decltype(&ModuleData::structures), &ModuleData::structures>(type_data.name);
+			Ensure(data && data->type, nullptr, "Struct '", type_data.name.c_str(), "' is found, but it's llvm type is unknown");
+			return data ? data->type : nullptr;
+		} 
 	case EVarType::Reference:
-		assert(false);
+		{
+			auto data = FindEntity<decltype(&ModuleData::classes), &ModuleData::classes>(type_data.name);
+			Ensure(data && data->type, nullptr, "Class '", type_data.name.c_str(), "' is found, but it's llvm type is unknown");
+			return data ? data->type : nullptr;
+		}
 	}
+	
 	return nullptr;
 }
 
-std::shared_ptr<FunctionData> Context::FindFunction(const std::string&, const llvm::Value*) const
+std::shared_ptr<FunctionData> Context::FindFunction(const std::string&, ExpressionResult) const
 {
 	
 

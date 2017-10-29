@@ -18,6 +18,21 @@ namespace Utils
 	{
 		return container.end() != std::find_if(container.begin(), container.end(), predicate);
 	}
+
+	template<typename T>
+	T* FindByName(const std::map<std::string, std::shared_ptr<T>>& map, const std::string& name)
+	{
+		auto it = map.find(name);
+		return (it != map.end()) ? it->second.get() : nullptr;
+	}
+
+	template<typename T>
+	T* FindByName(const std::vector<std::shared_ptr<T>>& container, const std::string& name)
+	{
+		auto it = std::find_if(container.begin(), container.end()
+			, [&](auto p) {return p && p->name == name; });
+		return (it != container.end()) ? it->get() : nullptr;
+	}
 };
 
 struct Logger

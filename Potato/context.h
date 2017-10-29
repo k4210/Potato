@@ -18,6 +18,8 @@ public:
 	};
 
 	std::shared_ptr<ModuleData> current_module_;
+	std::vector<std::shared_ptr<ModuleData>> included_modules_;
+
 	std::shared_ptr<FunctionData> current_function_;
 	std::vector<Scope> scope_stack_;
 
@@ -36,9 +38,9 @@ public:
 	}
 
 	llvm::Type* GetType(const TypeData& type_data);
-	EVarType Context::GetPotatoDataType(const llvm::Type* type_data);
+	EVarType GetPotatoDataType(const llvm::Type* type_data);
 
-	std::shared_ptr<FunctionData> FindFunction(const std::string& name, const llvm::Value* optional_owner = nullptr) const;
+	std::shared_ptr<FunctionData> FindFunction(const std::string& name, ExpressionResult optional_owner) const;
 
 	llvm::AllocaInst* CreateLocalVariable(const VariableData& variable);
 	VariableData FindVariable(const std::string& name) const;
@@ -53,6 +55,17 @@ public:
 	}
 
 private:
+	template<typename M, M member>
+	auto FindEntity(const std::string& name)
+	{
+		auto data = Utils::FindByName((*current_module_).*member, name);
+		for (unsigned int i = 0; (i < included_modules_.size()) && !data; i++)
+		{
+			data = Utils::FindByName((*included_modules_[i]).*member, name);
+		}
+		return data;
+	}
+
 	bool RegisterVariableOnCurrentScope(const VariableData& variable);
 
 };
