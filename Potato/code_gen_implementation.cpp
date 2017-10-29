@@ -99,10 +99,8 @@ ExpressionResult BinaryOpAST::Codegen(Context& context) const
 	}
 	Utils::SoftAssert(operator_data.Codegen, "Operator not implemented");
 
-	const EVarType right_var_type = context.GetPotatoDataType(right_value.value->getType());
-	const EVarType left_var_type = context.GetPotatoDataType(left_value.value->getType());
-
-	const bool valid_types = (right_var_type == left_var_type) && operator_data.supported_data_types.Get(right_var_type);
+	const bool compatible_types = Context::AreTypesCompatible(right_value.type_data, left_value.type_data);
+	const bool valid_types = compatible_types && operator_data.supported_data_types.Get(right_value.type_data.type);
 	if (!valid_types)
 	{
 		context.Error(this, "BinaryOpAST::codegen invalid types");
@@ -121,7 +119,7 @@ ExpressionResult BinaryOpAST::Codegen(Context& context) const
 ExpressionResult CallExprAST::Codegen(Context& context) const
 { 
 	const auto specified_function_owner = context_ ? context_->Codegen(context) : ExpressionResult{};
-	const auto called_function = context.FindFunction(function_name_, specified_function_owner);
+	const auto called_function = context.FindFunction(function_name_, context_ ? &specified_function_owner : nullptr);
 	if (!called_function || !called_function->function)
 	{
 		context.Error(this

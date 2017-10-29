@@ -27,8 +27,8 @@ public:
 	Context(const std::vector<std::shared_ptr<ModuleData>>& already_compiled_modules);
 
 	//Register error is condition is false. Return the condition.
-	void Error(const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "");
-	inline bool Ensure(bool condition, const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "")
+	void Error(const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "") const;
+	inline bool Ensure(bool condition, const NodeAST* node_ast, const char* msg0 = "", const char* msg1 = "", const char* msg2 = "") const
 	{
 		if (!condition)
 		{
@@ -38,9 +38,8 @@ public:
 	}
 
 	llvm::Type* GetType(const TypeData& type_data);
-	EVarType GetPotatoDataType(const llvm::Type* type_data);
 
-	std::shared_ptr<FunctionData> FindFunction(const std::string& name, ExpressionResult optional_owner) const;
+	std::shared_ptr<FunctionData> FindFunction(const std::string& name, const ExpressionResult* optional_owner) const;
 
 	llvm::AllocaInst* CreateLocalVariable(const VariableData& variable);
 	VariableData FindVariable(const std::string& name) const;
@@ -52,6 +51,11 @@ public:
 	void CloseScope()
 	{
 		scope_stack_.pop_back();
+	}
+
+	static bool AreTypesCompatible(const TypeData& a, const TypeData& b)
+	{
+		return a.type == b.type && a.name == b.name;
 	}
 
 private:

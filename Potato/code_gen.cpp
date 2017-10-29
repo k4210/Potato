@@ -29,7 +29,7 @@ Context::Context(const std::vector<std::shared_ptr<ModuleData>>& already_compile
 	, already_compiled_modules_(already_compiled_modules)
 {}
 
-void Context::Error(const NodeAST*, const char* msg0, const char* msg1, const char* msg2)
+void Context::Error(const NodeAST*, const char* msg0, const char* msg1, const char* msg2) const
 {
 	Utils::LogError(msg0, msg1, msg2);
 }
@@ -84,21 +84,6 @@ llvm::AllocaInst* Context::CreateLocalVariable(const VariableData& variable)
 	return alloca_inst;
 }
 
-EVarType Context::GetPotatoDataType(const llvm::Type* type_data)
-{
-	if (llvm::Type::getInt32Ty(the_context_) == type_data)
-	{
-		return EVarType::Int;
-	}
-	else if (llvm::Type::getFloatTy(the_context_) == type_data)
-	{
-		return EVarType::Float;
-	}
-	//TODO:
-
-	return EVarType::Void;
-}
-
 llvm::Type* Context::GetType(const TypeData& type_data)
 {
 	switch(type_data.type)
@@ -122,15 +107,41 @@ llvm::Type* Context::GetType(const TypeData& type_data)
 			return data ? data->type : nullptr;
 		}
 	}
-	
 	return nullptr;
 }
 
-std::shared_ptr<FunctionData> Context::FindFunction(const std::string&, ExpressionResult) const
+std::shared_ptr<FunctionData> Context::FindFunction(const std::string& name, const ExpressionResult* optional_owner) const
 {
-	
+	if (!current_function_)
+	{
+		Error(nullptr, "no function");
+		return nullptr;
+	}
 
-	// we don't support this.. yet
+	if (optional_owner)
+	{
+
+	}
+	else
+	{
+		auto current_function_owner = current_function_->owner.lock();
+		auto current_class = dynamic_cast<ClassData*>(current_function_owner.get()); //only when function is not static ?
+		if (auto func = current_class ? Utils::FindByName(current_class->functions, name) : nullptr)
+		{
+			return std::shared_ptr<FunctionData>(func);
+		}
+		if (auto func = Utils::FindByName(current_module_->functions, name))
+		{
+			return std::shared_ptr<FunctionData>(func);
+		}
+		for (auto& module : included_modules_)
+		{
+			if (auto func = module ? Utils::FindByName(module->functions, name) : nullptr)
+			{
+				return std::shared_ptr<FunctionData>(func);
+			}
+		}
+	}
 
 	return nullptr;
 }

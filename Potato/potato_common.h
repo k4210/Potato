@@ -255,7 +255,7 @@ struct HighLevelEntity : public std::enable_shared_from_this<HighLevelEntity>
 {
 	std::string name;
 	std::weak_ptr<HighLevelEntity> owner;
-
+	virtual ~HighLevelEntity() = default;
 };
 
 struct StructData : public HighLevelEntity
