@@ -255,13 +255,6 @@ struct HighLevelEntity : public std::enable_shared_from_this<HighLevelEntity>
 {
 	std::string name;
 	std::weak_ptr<HighLevelEntity> owner;
-	virtual ~HighLevelEntity() = default;
-};
-
-struct StructData : public HighLevelEntity
-{
-	std::map<std::string, VariableData> member_fields;
-	llvm::StructType* type = nullptr;
 };
 
 struct FunctionData : public HighLevelEntity
@@ -276,12 +269,17 @@ struct FunctionData : public HighLevelEntity
 	EFunctionMutable is_mutable = EFunctionMutable::Const;
 };
 
+struct StructData : public HighLevelEntity
+{
+	std::map<std::string, VariableData> member_fields;
+	std::map<std::string, std::shared_ptr<FunctionData>> functions;
+	llvm::StructType* type = nullptr;
+};
+
 struct ClassData : public StructData
 {
 	std::string base_class;
 	std::vector<std::string> implemented_interfaces;
-
-	std::map<std::string, std::shared_ptr<FunctionData>> functions;
 };
 
 struct ModuleData : HighLevelEntity

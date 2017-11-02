@@ -119,7 +119,7 @@ ExpressionResult BinaryOpAST::Codegen(Context& context) const
 ExpressionResult CallExprAST::Codegen(Context& context) const
 { 
 	const auto specified_function_owner = context_ ? context_->Codegen(context) : ExpressionResult{};
-	const auto called_function = context.FindFunction(function_name_, context_ ? &specified_function_owner : nullptr);
+	const auto called_function = context.FindFunction(function_name_, this, context_ ? &specified_function_owner : nullptr);
 	if (!called_function || !called_function->function)
 	{
 		context.Error(this
@@ -166,20 +166,70 @@ void CodeScopeAST::Codegen(Context& context)const
 		}
 	}
 }
-void IfAST::Codegen(Context& )const {}
-void ForExprAST::Codegen(Context& )const {}
-void BreakAST::Codegen(Context& )const {}
-void ContinueAST::Codegen(Context& )const {}
-void ReturnAST::Codegen(Context& )const {}
+void IfAST::Codegen(Context& )const 
+{
 
-void FunctionDeclarationAST::Codegen(Context& )const 
+}
+
+void ForExprAST::Codegen(Context& )const 
+{
+
+}
+
+void BreakAST::Codegen(Context& )const 
+{
+
+}
+
+void ContinueAST::Codegen(Context& )const 
+{
+
+}
+
+void ReturnAST::Codegen(Context& )const 
+{
+
+}
+
+void FunctionDeclarationAST::Codegen(Context& ) const 
 {
 	
 }
 
-void FunctionDeclarationAST::RegisterFunction(Context&)const
+void FunctionDeclarationAST::RegisterFunction(Context& context, llvm::StructType* implicit_owner_arg) const
 {
+	Utils::SoftAssert(function_data_ && !function_data_->function);
+	const auto& parameters = function_data_->parameters;
 
+	const unsigned int arg_offset = implicit_owner_arg ? 1 : 0;
+	std::vector<llvm::Type*> arguments(parameters.size() + arg_offset, nullptr);
+	if (implicit_owner_arg)
+	{
+		arguments[0] = implicit_owner_arg;
+	}
+	std::transform(parameters.begin(), parameters.end(), arguments.begin() + arg_offset, [&](const VariableData& variable_data)
+	{
+		return context.GetType(variable_data.type_data);
+	});
+	llvm::FunctionType* function_type = llvm::FunctionType::get(context.GetType(function_data_->return_type), arguments, false);
+
+	function_data_->function = llvm::Function::Create(function_type, 
+		llvm::Function::ExternalLinkage, 
+		function_data_->name, 
+		context.current_module_->module_implementation.get());
+	
+	unsigned int idx = 0;
+	for (auto &arg : function_data_->function->args())
+	{
+		if (implicit_owner_arg && 0 == idx)
+		{
+			arg.setName("this");
+		}
+		else
+		{
+			arg.setName(function_data_->parameters[arg_offset + idx].name);
+		}
+	}
 }
 
 void StructureAST::RegisterType(Context& context) const
@@ -194,7 +244,7 @@ void StructureAST::GenerateDataLayout(Context& context) const
 	std::vector<llvm::Type*> members;
 	for (auto& member_iter : structure_data_->member_fields)
 	{
-		// context.Ensure(nullptr == member_iter.second.value, this);
+		//context.Ensure(nullptr == member_iter.second.value, this);
 		// TODO: add llvm::Type to TypeData?
 		members.push_back(context.GetType(member_iter.second.type_data));
 	}
@@ -202,19 +252,20 @@ void StructureAST::GenerateDataLayout(Context& context) const
 	structure_data_->type->setBody(members);
 }
 
-void StructureAST::Codegen(Context&)const
+void StructureAST::RegisterFunctions(Context& context) const
 {
-
+	for (auto& function_ast : functions_)
+	{
+		function_ast->RegisterFunction(context, structure_data_->type);
+	}
 }
 
-void StructureAST::RegisterFunctions(Context& )const
+void StructureAST::Codegen(Context& context) const
 {
-
-}
-
-void ClassAST::Codegen(Context& )const 
-{
-
+	for (auto& function_ast : functions_)
+	{
+		function_ast->Codegen(context);
+	}
 }
 
 void ModuleAST::Codegen(Context& context) const
@@ -243,7 +294,7 @@ void ModuleAST::Codegen(Context& context) const
 
 	for (auto& item : structures_)	item->RegisterFunctions(context);
 	for (auto& item : classes_)		item->RegisterFunctions(context);
-	for (auto& item : functions_)	item->RegisterFunction(context);
+	for (auto& item : functions_)	item->RegisterFunction(context, nullptr);
 
 	for (auto& item : structures_)	item->Codegen(context);
 	for (auto& item : classes_)		item->Codegen(context);
@@ -255,10 +306,9 @@ void ModuleAST::Codegen(Context& context) const
 
 void ImportAST::Import(Context& context) const
 {
-	auto compiled_module_ptr = Utils::FindByName(context.already_compiled_modules_, name);
-	if (compiled_module_ptr)
+	auto compiled_module = Utils::FindByName(context.already_compiled_modules_, name);
+	if (compiled_module)
 	{
-		auto compiled_module = std::shared_ptr<ModuleData>(compiled_module_ptr);
 		const bool already_included = Utils::ContainsIf(context.current_module_->imported_modules
 			, [&](auto ptr) { return compiled_module == ptr.lock(); });
 		context.Ensure(!already_included, this, "module already imported");

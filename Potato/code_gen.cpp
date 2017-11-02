@@ -96,13 +96,13 @@ llvm::Type* Context::GetType(const TypeData& type_data)
 		return llvm::Type::getFloatTy(the_context_);
 	case EVarType::ValueStruct:
 		{
-			auto data = FindEntity<decltype(&ModuleData::structures), &ModuleData::structures>(type_data.name);
+			auto data = FindStructByName(type_data.name);
 			Ensure(data && data->type, nullptr, "Struct '", type_data.name.c_str(), "' is found, but it's llvm type is unknown");
 			return data ? data->type : nullptr;
 		} 
 	case EVarType::Reference:
 		{
-			auto data = FindEntity<decltype(&ModuleData::classes), &ModuleData::classes>(type_data.name);
+			auto data = FindClassByName(type_data.name);
 			Ensure(data && data->type, nullptr, "Class '", type_data.name.c_str(), "' is found, but it's llvm type is unknown");
 			return data ? data->type : nullptr;
 		}
@@ -110,38 +110,49 @@ llvm::Type* Context::GetType(const TypeData& type_data)
 	return nullptr;
 }
 
-std::shared_ptr<FunctionData> Context::FindFunction(const std::string& name, const ExpressionResult* optional_owner) const
+std::shared_ptr<FunctionData> Context::FindFunction(const std::string& name, const NodeAST* node_ast, const ExpressionResult* optional_owner) const
 {
-	if (!current_function_)
-	{
-		Error(nullptr, "no function");
-		return nullptr;
-	}
-
 	if (optional_owner)
 	{
-
+		if (optional_owner->type_data.type == EVarType::Reference)
+		{
+			auto class_data = FindClassByName(optional_owner->type_data.name);
+			if (!Ensure(!!class_data, node_ast, "cannot find CLASS owning function", name.c_str())) return nullptr;
+			return Utils::FindByName(class_data->functions, name);
+		}
+		if (optional_owner->type_data.type == EVarType::ValueStruct)
+		{
+			auto struct_data = FindStructByName(optional_owner->type_data.name);
+			if (!Ensure(!!struct_data, node_ast, "cannot find STRUCT owning function", name.c_str())) return nullptr;
+			return Utils::FindByName(struct_data->functions, name);
+		}
+		Error(node_ast, "inproper function's owner");
+		return nullptr;
 	}
 	else
 	{
+		if (!Ensure(!!current_function_, nullptr, "no current function")) return nullptr;
+
 		auto current_function_owner = current_function_->owner.lock();
-		auto current_class = dynamic_cast<ClassData*>(current_function_owner.get()); //only when function is not static ?
-		if (auto func = current_class ? Utils::FindByName(current_class->functions, name) : nullptr)
+		if (current_function_owner != current_module_)
 		{
-			return std::shared_ptr<FunctionData>(func);
+			auto current_class = static_cast<StructData*>(current_function_owner.get());
+			if (auto func = current_class ? Utils::FindByName(current_class->functions, name) : nullptr)
+			{
+				return func;
+			}
 		}
 		if (auto func = Utils::FindByName(current_module_->functions, name))
 		{
-			return std::shared_ptr<FunctionData>(func);
+			return func;
 		}
 		for (auto& module : included_modules_)
 		{
 			if (auto func = module ? Utils::FindByName(module->functions, name) : nullptr)
 			{
-				return std::shared_ptr<FunctionData>(func);
+				return func;
 			}
 		}
 	}
-
 	return nullptr;
 }

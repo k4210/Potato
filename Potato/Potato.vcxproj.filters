@@ -69,5 +69,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="TestCode.txt" />
+    <Text Include="Features.txt" />
   </ItemGroup>
 </Project>

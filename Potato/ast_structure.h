@@ -38,7 +38,7 @@ public:
 		}
 		logger.DecreaseIndent();
 	}
-	void RegisterFunction(Context& context) const;
+	void RegisterFunction(Context& context, llvm::StructType* implicit_owner_arg) const;
 	void Codegen(Context& context) const;
 };
 
@@ -47,6 +47,7 @@ class StructureAST : public HighLevelAST
 public:
 	//Todo: add info - expose to other modules? yes
 	std::shared_ptr<StructData> structure_data_;
+	std::vector<std::unique_ptr<FunctionDeclarationAST>> functions_;
 
 	StructureAST() = default;
 	StructureAST(std::shared_ptr<StructData> structure_data)
@@ -70,18 +71,35 @@ public:
 		{
 			logger.PrintLine("member_field", var.first.c_str());
 		}
+
+		for (auto& func : functions_)
+		{
+			func->log(logger, "func");
+		}
 		logger.DecreaseIndent();
 	}
 	void RegisterType(Context& context) const;
 	void GenerateDataLayout(Context& context) const;
 	void RegisterFunctions(Context& context) const;
 	void Codegen(Context& context) const;
+
+	void BindParsedChildren()
+	{
+		for (auto& func_ast : functions_)
+		{
+			if (func_ast && func_ast->function_data_)
+			{
+				func_ast->function_data_->owner = structure_data_;
+				structure_data_->functions.emplace(func_ast->function_data_->name, func_ast->function_data_);
+			}
+		}
+	}
 };
 
 class ClassAST : public StructureAST
 {
 public:
-	std::vector<std::unique_ptr<FunctionDeclarationAST>> functions_;
+	
 
 	//TODO: interfaces
 
@@ -108,25 +126,6 @@ public:
 	{
 		StructureAST::log(logger, contect_str);
 		logger.PrintLine(contect_str, "Base class: ", GetClassData()->base_class.c_str());
-
-		logger.IncreaseIndent();
-		for (auto& func : functions_)
-		{
-			func->log(logger, "func");
-		}
-		logger.DecreaseIndent();
-	}
-	void Codegen(Context& context) const;
-	void BindParsedChildren()
-	{
-		for (auto& func_ast : functions_)
-		{
-			if (func_ast && func_ast->function_data_)
-			{
-				func_ast->function_data_->owner = structure_data_;
-				GetClassData()->functions.emplace(func_ast->function_data_->name, func_ast->function_data_);
-			}
-		}
 	}
 };
 

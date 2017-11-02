@@ -59,8 +59,12 @@ BinaryOperatorDatabase::BinaryOperatorDatabase()
 		id_to_op_.emplace(id, in_op);
 		op_sorted_by_precedence_descending_.push_back(in_op);
 	};
-	add("=", 5, EBinaryOperator::Assign, EVarType::Int | EVarType::Float | EVarType::ValueStruct, nullptr);
-	add("=?", 5, EBinaryOperator::AssignIfValidChain, EVarType::Int | EVarType::Float | EVarType::ValueStruct, nullptr);
+	add("=", 5, EBinaryOperator::Assign, EVarType::Int | EVarType::Float | EVarType::ValueStruct, [](Context& context, ExpressionResult lhs, ExpressionResult rhs) -> ExpressionResult
+	{
+		return { lhs.type_data, context.builder_.CreateStore(lhs, rhs) };
+	});
+
+	//add("=?", 5, EBinaryOperator::AssignIfValidChain, EVarType::Int | EVarType::Float | EVarType::ValueStruct, nullptr);
 
 	add("+=", 5, EBinaryOperator::AddAssign, EVarType::Float | EVarType::Int, nullptr);
 	add("-=", 5, EBinaryOperator::SubAssign, EVarType::Float | EVarType::Int, nullptr);

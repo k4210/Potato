@@ -178,18 +178,27 @@ std::unique_ptr<StructureAST> Parser::ParseStruct()
 	auto struct_data = std::make_shared<StructData>();
 	Expected(EToken::Identifier, struct_data->name, "Expected struct name");
 	Expected(EToken::OpenCurlyBracket, "Expected open scope");
-	while(ShouldContinue())
+
+	std::unique_ptr<StructureAST> struct_ast = std::make_unique<StructureAST>(struct_data);
+	while (ShouldContinue())
 	{
 		if (Optional(EToken::CloseCurlyBracket))
 		{
 			Optional(EToken::Semicolon);
 			break;
 		}
-		auto member_field = ParseMemberField();
-		struct_data->member_fields.emplace(member_field.name, member_field);
+		if (Optional(EToken::Function))
+		{
+			struct_ast->functions_.push_back(ParseFunction());
+		}
+		else
+		{
+			auto member_field = ParseMemberField();
+			struct_data->member_fields.emplace(member_field.name, member_field);
+		}
 	}
-
-	return std::make_unique<StructureAST>(struct_data);
+	struct_ast->BindParsedChildren();
+	return struct_ast;
 }
 
 std::unique_ptr<FunctionDeclarationAST> Parser::ParseFunction()

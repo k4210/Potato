@@ -1,0 +1,24 @@
+Feature set:
+
+_ONE_
+- only single module
+- global functions
+- structures
+- structure non-virtual function
+- data types: float, int
+
+_TWO_
+- vectors, strings
+- C functions?
+- single structures inheritance?
+- const/mutable, private/public
+
+_THREE_
+- class, references
+- virtual functions
+- single base inheritance
+
+_FOUR_
+- many modules
+- interfaces
+- GC
